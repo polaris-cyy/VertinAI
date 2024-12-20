@@ -14,11 +14,19 @@ class BaseOCR():
         if type(language) != list:
             language = [language]
 
+    # Every subclass should implement its own readtext method
     def readtext(self, image_path):
         raise NotImplementedError
     
     def readtext_from_folder(self, folder_path):
-        raise NotImplementedError
+        text_list = []
+        for i, file_path in enumerate(glob.glob(os.path.join(folder_path, '*.jpg')) + glob.glob(os.path.join(folder_path, '*.png'))):
+            if i % 100 == 0:
+                print(f"Processed {i} images")
+                print(f"Current text list: {text_list[-5:]}")
+            text = self.readtext(file_path)
+            text_list.append(text)
+        return text_list
 
     def eng_match(self, word, target_word, threshold=0.7):
         word = word.lower()
@@ -44,44 +52,6 @@ class BaseOCR():
         elif 'ch' in self.language:
             return self.ch_match(word, target_word, threshold)
 
-    def find_index_by_word(self, folder_path, target_word, threshold=0.7, rewrite=False):
-        raise NotImplementedError
-    
-# class EasyOCR(BaseOCR):
-#     def __init__(self, language=['en']):
-#         super().__init__(language)
-#         self.reader = easyocr.Reader(lang_list = language)
-
-class EasyOCR(BaseOCR):
-    def __init__(self, language=['ch']):
-        super().__init__(language)
-        self.reader = PaddleOCR(
-            lang=self.language[0],
-            use_angle_cls=True,
-            show_log=False
-            ) 
-    
-    def readtext(self, image_path):
-        text = self.reader.ocr(image_path, cls=True)
-        if text[0] != None:
-            return [text[0][i][1][0] for i in range(len(text[0]))]
-        else:
-            return []
-    
-    def readtext_from_folder(self, folder_path):
-        text_list = []
-        for i, file_path in enumerate(glob.glob(os.path.join(folder_path, '*.jpg')) + glob.glob(os.path.join(folder_path, '*.png'))):
-            if i % 100 == 0:
-                print(f"Processed {i} images")
-                print(f"Current text list: {text_list[-5:]}")
-            temp = self.readtext(file_path)
-            text = []
-            if type(temp[0]) == list:
-                for i in range(len(temp[0])):
-                    text.append(temp[0][i][1][0])
-            text_list.append(text)
-        return text_list
-    
     def find_index_by_word(self, folder_path, target_word, threshold=0.7, rewrite=False):
         if folder_path == None:
             folder_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../fixedM4S_cropped_frames")
@@ -113,3 +83,24 @@ class EasyOCR(BaseOCR):
             f.write(f"Target word: {target_word}\n")
             f.write(f"Found index: {res_list}\n")
         return res_list
+    
+# class EasyOCR(BaseOCR):
+#     def __init__(self, language=['en']):
+#         super().__init__(language)
+#         self.reader = easyocr.Reader(lang_list = language)
+
+class EasyOCR(BaseOCR):
+    def __init__(self, language=['ch']):
+        super().__init__(language)
+        self.reader = PaddleOCR(
+            lang=self.language[0],
+            use_angle_cls=True,
+            show_log=False
+            ) 
+    
+    def readtext(self, image_path):
+        text = self.reader.ocr(image_path, cls=True)
+        if text[0] != None:
+            return [text[0][i][1][0] for i in range(len(text[0]))]
+        else:
+            return []

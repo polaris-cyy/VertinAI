@@ -81,7 +81,10 @@ python run.py --extract_frames
 # 默认识别维尔汀，30帧视频
 python run.py --classify
 #获得最终结果
-python run.py --final_process --clear
+python run.py --final_process
+
+# <可选> 清除中间文件
+python run.py --clear
 ```
 
 ### Custom setting

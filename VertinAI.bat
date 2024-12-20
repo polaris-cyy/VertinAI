@@ -11,12 +11,9 @@ python run.py --crop_video --crop_size=1080p
 python run.py --extract_frames
 
 :: 默认识别Vertin
-python run.py -r --classify
-
-:: 默认30帧
-python run.py -r --get_audio_interval
+python run.py --classify
 
 :: 获得最终结果
-python run.py -r --final_process --clear
+python run.py --final_process
 
 pause
