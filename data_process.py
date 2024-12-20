@@ -473,7 +473,7 @@ def get_final_segment(input_path=None,  rewrite=False, expand=20, video_frame_ra
 
 def clear(input_path=None):
     if input_path is None:
-        intput_path = os.path.dirname(os.path.abspath(__file__))
+        input_path = os.path.dirname(os.path.abspath(__file__))
 
     path_list = ["fixedM4S", "fixedM4S_cropped", "fixedM4S_cropped_frames"]
     for path_name in path_list:
