@@ -8,8 +8,6 @@ def fixM4S(targetPath, outputPath=None, bufSize:int = 256 * 1024 * 1024) -> str:
     with open(targetPath, 'rb') as targetFile:
         header = targetFile.read(32)    
         newHeader = header.replace(b'000000000', b'')
-        newHeader = newHeader.replace(b'$', b' ')
-        newHeader = newHeader.replace(b'avc1', b'')
         with open(os.path.join(outputPath, os.path.basename(targetPath)), 'wb') as outputFile:
             outputFile.write(newHeader)
             i = targetFile.read(bufSize)
@@ -21,11 +19,13 @@ def fixM4S(targetPath, outputPath=None, bufSize:int = 256 * 1024 * 1024) -> str:
 def fixM4S_from_folder(targetFolder=None, outputFolder=None, bufSize: int = 256 * 1024 * 1024) -> str:
     assert bufSize > 0
     if targetFolder is None:
-        targetFolder = os.path.join(os.getcwd(), "data")
+        targetFolder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
     if outputFolder is None:
         outputFolder = os.path.join(os.path.dirname(targetFolder), "fixedM4S")
     if not os.path.isdir(outputFolder):
         os.makedirs(outputFolder)
+
+    cmd = ""
     
     print("Fixing M4S files in folder: ", targetFolder)
     for targetPath in os.listdir(targetFolder):
@@ -36,7 +36,7 @@ def fixM4S_from_folder(targetFolder=None, outputFolder=None, bufSize: int = 256 
             fixM4S_from_folder(targetPath, os.path.join(outputFolder, os.path.basename(targetPath)), bufSize)
     return outputFolder
 
-def modify_extension(targetPath):
+def modify_extension(targetPath: str):
     if not os.path.isfile(targetPath):
         raise FileNotFoundError(f"{targetPath} not found")
     if not targetPath.endswith(".m4s"):
@@ -44,20 +44,19 @@ def modify_extension(targetPath):
     
     print(f"Converting {targetPath} to mp3 or mp4")
     fileName, fileExtension = os.path.splitext(os.path.basename(targetPath))
+
+    cmd = ""
     if "30280" in fileName: 
-        if targetPath.replace('.m4s', '.mp3') in os.listdir(os.path.dirname(targetPath)):
+        if os.path.basename(targetPath).replace('.m4s', '.mp3') in os.listdir(os.path.dirname(targetPath)):
             print(f"{targetPath.replace('.m4s', '.mp3')} already exists, skipping...")
-            os.remove(targetPath)
             return
-        cmd = f"ffmpeg -loglevel quiet -i {targetPath} -q:a 0 {targetPath.replace('.m4s', '.mp3')}"
+        cmd = f"ffmpeg -i {targetPath} -loglevel quiet -q:a 0 {targetPath.replace('.m4s', '.mp3')}"
     else:
-        if targetPath.replace('.m4s', '.mp4') in os.listdir(os.path.dirname(targetPath)):
+        if os.path.basename(targetPath).replace('.m4s', '.mp4') in os.listdir(os.path.dirname(targetPath)):
             print(f"{targetPath.replace('.m4s', '.mp4')} already exists, skipping...")
-            os.remove(targetPath)
             return
-        cmd = f"ffmpeg -loglevel quiet -i {targetPath} -c copy {targetPath.replace('.m4s', '.mp4')}"
+        cmd = f"ffmpeg -i {targetPath} -loglevel quiet -c copy {targetPath.replace('.m4s', '.mp4')}"
     subprocess.call(cmd, shell=True)
-    os.remove(targetPath)
     
 def modify_extension_from_folder(targetFolder):
     if targetFolder is None:
@@ -69,3 +68,8 @@ def modify_extension_from_folder(targetFolder):
             modify_extension(targetPath)
         elif os.path.isdir(targetPath):
             modify_extension_from_folder(targetPath)
+
+if __name__ == "__main__":
+    path = r"D:\D\VertinAI\data\1510149659"
+    fixM4S_from_folder(path)
+    modify_extension_from_folder(path)

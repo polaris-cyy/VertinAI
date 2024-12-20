@@ -12,6 +12,8 @@ class OptionParser():
         self.parser.add_argument("--move_data", "-m", action='store_true', default=False, help="Whether to move data or not.")
         self.parser.add_argument("--num_threads", "-t", default="1", type=str, help="Number of threads to use for file operation.")
 
+        self.parser.add_argument("--merge", action='store_true', default=False, help="Whether to merge videos or not.")
+
         self.parser.add_argument("--extract_frames", action='store_true', default=False, help="Whether to extract frames or not.")
         self.parser.add_argument("--rewrite", "-re", action='store_true', default=False, help="Whether to overwrite existing files or not.")
         self.parser.add_argument("--frame_interval", default=30, type=int, help="Frame interval for extracting frames.")

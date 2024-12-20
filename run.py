@@ -17,6 +17,8 @@ def main():
             fixM4S.modify_extension_from_folder(opt.input_path)
         elif opt.crop_video:
             data_process.video_crop_from_folder(opt.input_path, opt.output_path, opt.rewrite, opt.crop_size, opt.num_threads)
+        elif opt.merge:
+            data_process.merge_audio_video_from_folder(opt.input_path, opt.output_path, opt.keep_audio, opt.keep_video)
     else:
         if opt.extract_frames:
             data_process.extract_frames(opt.input_path, opt.output_path, opt.frame_interval, opt.num_threads)
@@ -33,8 +35,12 @@ def main():
         if opt.classifier == "paddleocr":
             from models.ocr import EasyOCR
             ocr = EasyOCR()
+        else:
+            raise NotImplementedError("Classifier not implemented")
+        
         ocr.find_index_by_word(opt.input_path, opt.target_word, opt.match_threshold, opt.rewrite)
         data_process.calculate_audio_interval(opt.input_path, opt.rewrite)
+
     if opt.final_process:
         data_process.get_final_segment(opt.input_path, opt.rewrite, opt.expand, opt.video_frame_rate, opt.keep_audio, opt.keep_video, opt.language)
 

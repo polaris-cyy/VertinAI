@@ -24,6 +24,58 @@ def move_data(cache_path, output_path=None):
         if os.path.isdir(dir_path):
             shutil.move(dir_path, output_path)
 
+def merge_audio_video(audio_path, video_path, output_path="output.mp4", keep_audio=False, keep_video=False):
+    if not os.path.isfile(audio_path):
+        raise FileNotFoundError("Audio file {} not found".format(audio_path))
+    if not os.path.isfile(video_path):
+        raise FileNotFoundError("Video file {} not found".format(video_path))
+    print("Merging audio and video from {} and {} to {}".format(audio_path, video_path, output_path))
+    cmd = [
+        'ffmpeg',  
+        "-loglevel", "quiet",
+        '-i', video_path,    # 输入视频文件  
+        '-i', audio_path,    # 输入音频文件  
+        '-c:v', 'copy',      # 复制视频流，不进行转码  
+        '-c:a', 'aac',       # 使用 AAC 编码音频  
+        '-strict', 'experimental',  # 允许使用实验性的编解码器  
+        output_path
+    ]
+    subprocess.run(cmd, Shell=True, check=True)
+
+    if not keep_audio:
+        os.remove(audio_path)
+    if not keep_video:
+        os.remove(video_path)
+
+def merge_audio_video_from_folder(input_folder, output_folder=None, keep_audio=False, keep_video=False):
+    if not os.path.isdir(input_folder):
+        raise FileNotFoundError("Input folder {} not found".format(input_folder))
+    if output_folder is None:
+        output_folder = os.path.join(os.path.dirname(input_folder), "merged")
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+    entries = os.listdir(input_folder)
+    audio_path = []
+    video_path = []
+    for entry in entries:
+        if os.path.isfile(os.path.join(input_folder, entry)):
+            if audio_suffix in entry:
+                audio_path.append(os.path.join(input_folder, entry))
+            else:
+                video_path.append(os.path.join(input_folder, entry))
+        elif os.path.isdir(os.path.join(input_folder, entry)):
+            merge_audio_video_from_folder(os.path.join(input_folder, entry), output_folder, keep_audio, keep_video)
+    if len(audio_path) == 1 and len(video_path) == 1:
+        merge_audio_video(
+            audio_path[0], 
+            video_path[0], 
+            os.path.join(output_folder, os.path.basename(audio_path[0]).split(".")[0]) + ".mp4",
+            keep_audio, 
+            keep_video
+        )
+    else:
+        print("More than one audio or video file found, skipping")
+        
 
 def video_compress(
         input_path,
@@ -455,21 +507,9 @@ def get_final_segment(input_path=None,  rewrite=False, expand=20, video_frame_ra
                       intervals, target_word, expand=expand, language=language)
     get_audio_segment(audio_path, new_audio_path, intervals, video_frame_rate=video_frame_rate)
     print("--------------Merging video and audio--------------")
-    cmd = [
-        'ffmpeg',  
-        "-loglevel", "quiet",
-        '-i', new_video_path,    # 输入视频文件  
-        '-i', new_audio_path,    # 输入音频文件  
-        '-c:v', 'copy',      # 复制视频流，不进行转码  
-        '-c:a', 'aac',       # 使用 AAC 编码音频  
-        '-strict', 'experimental',  # 允许使用实验性的编解码器  
-        os.path.join(output_path, os.path.basename(main_dir) + "_final.mp4")
-    ]
-    subprocess.run(cmd, shell=True)
-    if not keep_audio:
-        os.remove(new_audio_path)
-    if not keep_video:
-        os.remove(new_video_path)
+    merge_audio_video(new_video_path, new_audio_path, os.path.join(output_path, os.path.basename(main_dir) + "_final.mp4"), \
+                      keep_audio=keep_audio, keep_video=keep_video)
+    print("--------------Done----------------")
 
 def clear(input_path=None):
     if input_path is None:
