@@ -68,8 +68,3 @@ def modify_extension_from_folder(targetFolder):
             modify_extension(targetPath)
         elif os.path.isdir(targetPath):
             modify_extension_from_folder(targetPath)
-
-if __name__ == "__main__":
-    path = r"D:\D\VertinAI\data\1510149659"
-    fixM4S_from_folder(path)
-    modify_extension_from_folder(path)

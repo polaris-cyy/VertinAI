@@ -40,7 +40,7 @@ def merge_audio_video(audio_path, video_path, output_path="output.mp4", keep_aud
         '-strict', 'experimental',  # 允许使用实验性的编解码器  
         output_path
     ]
-    subprocess.run(cmd, Shell=True, check=True)
+    subprocess.run(cmd, shell =True, check=True)
 
     if not keep_audio:
         os.remove(audio_path)
