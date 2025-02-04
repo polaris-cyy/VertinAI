@@ -41,6 +41,11 @@ paddleocr
 |--- data
 |  |--- <file folder>
 |     |--- <cached files>
+|---merge
+|  |--- merge.py #运行此文件，合并input中的mp3或mp4，生成文件位于output
+|  |--- input
+|  |--- output
+|
 |--- result
 |  |--- <file folder>
 |     |--- xxx_fixed_final.mp4 #目标文件
@@ -86,6 +91,8 @@ python run.py --final_process
 # <可选> 清除中间文件
 python run.py --clear
 ```
+
+- 运行完后，可将result文件夹中的输出放入./merge/input，运行merge.py，合成文件位于./merge/output
 
 ### Custom setting
 

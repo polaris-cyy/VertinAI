@@ -3,6 +3,8 @@ fixedM4S/
 fixedM4S_cropped/
 fixedM4S_cropped_frames/
 result/
+merge/input/
+merge/output/
 *.m4s
 *.mp4
 *.mp3

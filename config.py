@@ -31,14 +31,14 @@ class OptionParser():
         self.parser.add_argument("--classify", action='store_true', default=False, help="Whether to recognize text or not.")
         self.parser.add_argument("--classifier", default="paddleocr", type=str, help="Name of the classifier to recognize text.")
         self.parser.add_argument("--match_threshold", default=0.7, type=float, help="Threshold for matching text.")
-        self.parser.add_argument("--target_word", default="维尔汀", type=str, help="Target word to search for in the text.")
+        self.parser.add_argument("--target_word", default="马库斯", type=str, help="Target word to search for in the text.")
         self.parser.add_argument("--language", default="ch", type=str, help="Language of the text to recognize.")
 
         self.parser.add_argument("--final_process", '-fp', action='store_true', default=False, help="Get the final video clip.")
         self.parser.add_argument("--video_frame_rate", default=30, type=int, help="Frame rate for input and output video.")
         self.parser.add_argument("--expand", default=20, type=int, help="Expansion amount for the final video clip.")
-        self.parser.add_argument("--keep_audio", default=False, action="store_true", help="Whether to keep audio or not.")
-        self.parser.add_argument("--keep_video", default=False, action="store_true", help="Whether to keep video or not.")
+        self.parser.add_argument("--keep_audio", default=True, action="store_true", help="Whether to keep audio or not.")
+        self.parser.add_argument("--keep_video", default=True, action="store_true", help="Whether to keep video or not.")
 
         self.parser.add_argument("--clear", default=False, action="store_true", help="Whether to clear cache or not.")
 

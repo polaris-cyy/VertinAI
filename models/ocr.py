@@ -3,6 +3,8 @@ import os
 import difflib
 import sys
 import numpy as np
+from tqdm import tqdm
+import time
 
 sys.path.append(os.path.dirname(__file__))
 from PaddleOCR.paddleocr import PaddleOCR
@@ -20,12 +22,16 @@ class BaseOCR():
     
     def readtext_from_folder(self, folder_path):
         text_list = []
-        for i, file_path in enumerate(glob.glob(os.path.join(folder_path, '*.jpg')) + glob.glob(os.path.join(folder_path, '*.png'))):
-            if i % 100 == 0:
-                print(f"Processed {i} images")
-                print(f"Current text list: {text_list[-5:]}")
-            text = self.readtext(file_path)
-            text_list.append(text)
+        last_time = time.time()
+        with tqdm(total=len(glob.glob(os.path.join(folder_path, '*.jpg')) + glob.glob(os.path.join(folder_path, '*.png'))), \
+                  desc="已处理", leave=True, ncols=100) as pbar:
+            for i, file_path in enumerate(glob.glob(os.path.join(folder_path, '*.jpg')) + glob.glob(os.path.join(folder_path, '*.png'))):
+                current_time = time.time()
+                if current_time - last_time > 1:
+                    pbar.update(i - pbar.n)
+                    last_time = current_time
+                text = self.readtext(file_path)
+                text_list.append(text)
         return text_list
 
     def eng_match(self, word, target_word, threshold=0.7):
@@ -71,12 +77,16 @@ class BaseOCR():
         
         text_list = self.readtext_from_folder(image_path)
         res_list = []
-        for i, text in enumerate(text_list):
-            if i % 100 == 0:
-                print(f"Matched {i} words")
-            prob_list = [self.fuzzy_match(word, target_word, threshold) for word in text]
-            if any(prob_list):
-                res_list.append(i)
+        last_time = time.time()
+        with tqdm(total=len(text_list), desc="Matching", leave=True, ncols=100) as pbar:
+            for i, text in enumerate(text_list):
+                current_time = time.time()
+                if current_time - last_time > 0.1:
+                    pbar.update(i - pbar.n)
+                    last_time = current_time
+                prob_list = [self.fuzzy_match(word, target_word, threshold) for word in text]
+                if any(prob_list):
+                    res_list.append(i)
         if os.path.isfile(info_path):
             os.remove(info_path)
         with open(info_path, "w") as f:
