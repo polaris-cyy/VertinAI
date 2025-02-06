@@ -3,7 +3,7 @@ from glob import glob
 import subprocess
 import shutil
 
-def merge_mp3(input_files, output_path, fade_frame=2, video_frame_rate=30):
+def merge_wav(input_files, output_path, fade_frame=2, video_frame_rate=30):
     filter_chains = []
 
     real_input_files = []
@@ -33,9 +33,6 @@ def merge_mp3(input_files, output_path, fade_frame=2, video_frame_rate=30):
         '-filter_complex', filter_complex,
         '-loglevel', 'quiet',
         '-map', '[outa]',
-        '-c:a', 'libmp3lame',
-        '-q:a', '0', 
-        '-f', 'mp3', 
         '-y',
         output_path
     ]
@@ -70,8 +67,8 @@ def merge(suffix='auto', fade_frame=2, video_frame_rate=30):
         os.makedirs(input_path)
     input_files = os.listdir(input_path)
     if suffix == 'auto':
-        if input_files[0].endswith('.mp3'):
-            suffix = 'mp3'
+        if input_files[0].endswith('.wav'):
+            suffix = 'wav'
         elif input_files[0].endswith('.mp4'):
             suffix = 'mp4'
         else:
@@ -90,8 +87,8 @@ def merge(suffix='auto', fade_frame=2, video_frame_rate=30):
                 shutil.copy(os.path.join(path, dir, file), os.path.join(pwd, "input"))
         input_files = [os.path.join(pwd, "input", x) for x in os.listdir(os.path.join(pwd, "input")) if x.endswith(suffix)]
 
-    if suffix =='mp3':
-        merge_mp3(input_files, output_path, fade_frame, video_frame_rate)
+    if suffix =='wav':
+        merge_wav(input_files, output_path, fade_frame, video_frame_rate)
     elif suffix =='mp4':
         merge_mp4(input_files, output_path, fade_frame, video_frame_rate)
     else:

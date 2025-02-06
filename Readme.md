@@ -37,15 +37,19 @@ paddleocr
 |--- data_process.py
 |--- models # 用于识别target_name, to be implemented
 |  |--- ocr.py
+|  |--- img_process.py # 用于图像增强
 |  |--- ...
 |--- data
 |  |--- <file folder>
 |     |--- <cached files>
-|---merge
+|--- merge
 |  |--- merge.py #运行此文件，合并input中的mp3或mp4，生成文件位于output
 |  |--- input
 |  |--- output
-|
+|--- ref
+|  |--- video
+|  |--- images
+|  |--- params
 |--- result
 |  |--- <file folder>
 |     |--- xxx_fixed_final.mp4 #目标文件
@@ -74,22 +78,24 @@ paddleocr
 
 运行前，配置好python依赖环境，依次运行以下代码或VertinAI.bat：
 
+- 重点！！！crop_size必须修改成角色名附近，输入格式为"宽度:高度:\x:y"，可以使用画图工具确定范围；target_word也要修改成对应的角色名
+
 ```bash
 # 将bilibili的缓存视频全部移到data中
-python run.py -m
+python run.py -m=true
 # 将.m4s格式转为
-python run.py --fix
-# 默认1080p图片，Vertin名字附近，其它要自设参数。
-python run.py --crop_video --crop_size=1080p
+python run.py --fix=true
+# 默认自动识别图片，Vertin名字附近，其它要自设参数。
+python run.py --crop_video=true --crop_size=auto --target_word=维尔汀
 # 提取帧
-python run.py --extract_frames
+python run.py --extract_frames=true
 # 默认识别维尔汀，30帧视频
-python run.py --classify
+python run.py --classify=true --target_word=维尔汀
 #获得最终结果
-python run.py --final_process
+python run.py --final_process=true --target_word=维尔汀
 
 # <可选> 清除中间文件
-python run.py --clear
+python run.py --clear=true
 ```
 
 - 运行完后，可将result文件夹中的输出放入./merge/input，运行merge.py，合成文件位于./merge/output
@@ -101,6 +107,37 @@ python run.py --clear
 代码中，可能有部分常量需要修改，如：
 
 - 4K的后缀为30120，1080p的后缀为30080等；音频的后缀始终为30280。请使用ctrl+f自行修改。
-- 不同分辨率/视频/人物需要对不同的位置进行crop
+
+- 不同分辨率/视频/人物需要对不同的位置进行crop，或者使用auto_crop
+
 - video_frame_rate默认为30，请注意是否使用60帧视频进行处理
+
+- 其余default_config.json中建议修改的自定义常量如下：
+
+  ```python
+  - 将target_word设为要识别的角色名
+  
+  对于crop_size
+  - 如果人物出现时间较短, 建议找到相应片段，提取帧放入./ref/images
+  - 如果人物出现次数较多, 可适当提高auto_crop_interval
+  - 可以根据帧, 右键图片-编辑-画图工具, 得到角色名所在位置, crop_size格式为: 宽: 高: 左上x: 左上y
+  
+  对于高质量、背景不混乱的视频可改为
+  - ocr_enhance可改为false
+  - rec_algorithm可改为CRNN，
+  - ocr_super_res可改为false
+  - ocr参数如drop_score, det_db_thresh可更改
+  
+  对于相近的角色名，如37和77
+  - 在invalid_char_list中加入错误的角色名
+  - 在valid_char_list中加入正确的角色名，或可能角色名被错误识别成的名字
+  
+  对于有gpu的设备
+- use_tensorrt设为true
+  
+  对于想保留纯音频/纯视频的
+  - 将keep_audio/keep_video设为true
+  ```
+  
+  
 
