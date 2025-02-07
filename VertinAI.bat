@@ -11,7 +11,6 @@ python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thres
 python run.py --extract_frames=true
 
 :: 默认识别Vertin
-# 默认识别维尔汀，30帧视频
 python run.py --classify=true
 
 :: 获得最终结果
@@ -19,8 +18,5 @@ python run.py -fp=true --refine_intervals=true
 python run.py -fp=true --get_video_segment=true
 python run.py -fp=true --get_audio_segment=true
 python run.py -fp=true --merge_audio_video=true
-
-:: <可选> 按序合并result中的文件
-python run.py --merge=true
 
 pause

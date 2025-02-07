@@ -18,6 +18,7 @@ class BaseOCR():
     def __init__(self, opt: ArgumentParser):
         self.language = opt.language
         self.auto_crop_interval = opt.auto_crop_interval
+        self.crop_ratio = opt.crop_ratio
         self.ocr_enhance_list = opt.ocr_enhance_list
         self.rec_algorithm = opt.rec_algorithm
         self.rec_batch_num = opt.rec_batch_num
@@ -31,6 +32,10 @@ class BaseOCR():
         self.det_db_unclip_ratio = opt.det_db_unclip_ratio
         self.use_multiscale_det = opt.use_multiscale_det
         self.det_scales = opt.det_scales
+        self.always_auto_crop = opt.always_auto_crop
+        self.dbscan_eps = opt.dbscan_eps
+        self.dbscan_min_samples = opt.dbscan_min_samples
+
         
         self.sr_model=None
         if "super_resolution" in self.ocr_enhance_list:
@@ -53,7 +58,7 @@ class BaseOCR():
                   desc="已处理", leave=True, ncols=100) as pbar:
             for i, file_path in enumerate(glob.glob(join(folder_path, '*.jpg')) + glob.glob(join(folder_path, '*.png'))):
                 current_time = time.time()
-                if current_time - last_time > 1:
+                if current_time - last_time > 0.2:
                     pbar.update(i - pbar.n)
                     last_time = current_time
                 text = self.readtext(file_path)
@@ -84,6 +89,9 @@ class BaseOCR():
         return True
 
     def fuzzy_match(self, word, target_word):
+        if "/" in word:
+            word = word.split("/")[0]
+            
         if word in self.invalid_char_list:
             return False
         if word == target_word or word in self.valid_char_list:
@@ -150,7 +158,7 @@ class BaseOCR():
             os.makedirs(ref_params)
         else:
             param = join(ref_params, f"{target_word}.json")
-            if isfile(param):
+            if isfile(param) and not self.always_auto_crop:
                 with open(param, "r") as f:
                     bb_info = json.load(f)
                 print(f"{target_word}已有对应crop_size: {bb_info['crop_size']}")
@@ -184,7 +192,7 @@ class BaseOCR():
             last_time = time.time()
             for i, image in enumerate(os.listdir(ref_img)):
                 current_time = time.time()
-                if current_time - last_time > 0.5:
+                if current_time - last_time > 0.2:
                     pbar.update(i - pbar.n)
                 
                 bb, texts = self.readtext(join(ref_img, image), with_bb=True, with_enhance=False)
@@ -198,7 +206,7 @@ class BaseOCR():
 
         centers = np.array(centers)
         print(f"共有{len(centers)}/{len(os.listdir(ref_img))}个候选位置")
-        dbscan = DBSCAN(eps=40, min_samples=1)
+        dbscan = DBSCAN(eps=self.dbscan_eps, min_samples=self.dbscan_min_samples)
         labels = dbscan.fit_predict(centers)
         # print(clusters)
         unique_labels, counts = np.unique(labels, return_counts=True)
@@ -216,11 +224,12 @@ class BaseOCR():
         max_y = np.max(boxes[:, :, 1])
         width = max_x-min_x
         height = max_y-min_y
+        crop_ratio = self.crop_ratio
+        min_x = max(0, min_x-width*(crop_ratio-1)/2)
+        min_y = max(0, min_y-height*(crop_ratio-1)/2)
+        width = crop_ratio * width
+        height = crop_ratio * height
         width, height, min_x, min_y = int(width), int(height), int(min_x), int(min_y)
-        min_x = max(0, min_x-width//2)
-        min_y = max(0, min_y-height//2)
-        width = 2 * width
-        height = 2 * height
         ret = f"{width}:{height}:{min_x}:{min_y}"
         with open(join(ref_params, f"{target_word}.json"), "w") as f:
             json.dump({"crop_size": ret}, f)
@@ -285,7 +294,7 @@ if __name__ == "__main__":
         use_multiscale_det=True,
         det_scales=[0.5, 1.0, 2.0]
     ) 
-    path = r"D:\D\VertinAI\fixedM4S_cropped_frames\1304581394\images\_000352.png"
+    path = r"D:\D\VertinAI\fixedM4S_cropped_frames\1551103945\images\_003833.png"
     sr_model = cv2.dnn_superres.DnnSuperResImpl_create()
     sr_path = "D:\D\VertinAI\models\LapSRN_x2.pb"
     sr_model.readModel(sr_path)

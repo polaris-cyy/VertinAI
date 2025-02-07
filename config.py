@@ -36,6 +36,8 @@ class OptionParser():
         self.parser.add_argument("--target_word", type=str, help="角色名.")
         self.parser.add_argument("--language", type=str, help="识别模型语言.")
         self.parser.add_argument("--auto_crop_interval", type=int, help="自动裁剪帧间隔, 单位为秒.")
+        self.parser.add_argument("--always_auto_crop", type=bool, help="是否总是自动确定裁剪区域, 非常影响速率, 建议增大crop_ratio即可.")
+        self.parser.add_argument("--crop_ratio", type=float, help="crop区域扩大比例, 建议至少为1.5, 否则可能导致识别失败. 若设置较大, 建议取消超分辨率.")
         self.parser.add_argument("--ocr_enhance_list", type=list, help="图像增强选项, 目前支持[binary, grayscale, sharpen, enhance, enlarge,\n\
                                  super_resolution, laplacian_sharpen, high_boost_sharpen, dilate, erode\n].")
         self.parser.add_argument("--rec_algorithm", type=str, choices=["CRNN", "SVTR_LCNet"], help="使用识别低质量文本的参数")
@@ -49,6 +51,8 @@ class OptionParser():
         self.parser.add_argument("--use_tensorrt", type=bool, help="是否使用tensorrt加速, 需要gpu")
         self.parser.add_argument("--invalid_char_list", type=list, help="用于强制过滤非法角色名")
         self.parser.add_argument("--valid_char_list", type=list, help="合法角色名列表, 用于某些难以判别的场合")
+        self.parser.add_argument("--dbscan_eps", type=float, help="DBSCAN的eps参数")
+        self.parser.add_argument("--dbscan_min_samples", type=int, help="DBSCAN的min_samples参数")
 
         self.parser.add_argument("--final_process", '-fp', type=bool, help="是否进行切片与合并.")
         self.parser.add_argument("--refine_intervals", type=bool, help="是否进行区间细化.")

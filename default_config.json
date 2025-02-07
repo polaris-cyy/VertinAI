@@ -18,12 +18,14 @@
     "buf_size": 268435456,
     "classify": false,
     "classifier": "paddleocr",
-    "match_threshold": 0.7,
+    "match_threshold": 0.9,
     "target_word": "37",
     "language": [
         "en"
     ],
     "auto_crop_interval": 20,
+    "always_auto_crop": false,
+    "crop_ratio": 4.0, 
     "ocr_enhance_list": [
         "super_resolution",
         "dilate",
@@ -50,6 +52,8 @@
         "37/Thirty-seven",
         "Thirty-seven"
     ],
+    "dbscan_eps": 20,
+    "dbscan_min_samples": 1,
     "final_process": false,
     "refine_intervals": false,
     "get_audio_segment": false,

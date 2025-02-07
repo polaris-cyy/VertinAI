@@ -112,9 +112,18 @@ python run.py --merge=true
 - 可以复制下面这个语句至cmd
 
   ```
-  python run.py -m=true && python run.py --fix=true && python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thresh=0.3 --det_db_unclip_ratio=1.5 --det_db_box_thresh=0.6 --ocr_enhance_list=["grayscale","enhance","sharpen"] && python run.py --extract_frames=true && python run.py --classify=true && python run.py -fp=true --refine_intervals=true && python run.py -fp=true --get_video_segment=true && python run.py -fp=true --get_audio_segment=true && python run.py -fp=true --merge_audio_video=true
+  python run.py -m=true
+  python run.py --fix=true
+python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thresh=0.3 --det_db_unclip_ratio=1.5 --det_db_box_thresh=0.6 --ocr_enhance_list=["grayscale","enhance","sharpen"] --crop_ratio=2.0
+  python run.py --extract_frames=true
+  python run.py --classify=true
+  python run.py -fp=true --refine_intervals=true 
+  python run.py -fp=true --get_video_segment=true
+  python run.py -fp=true --get_audio_segment=true
+  python run.py -fp=true --merge_audio_video=true
+  
   ```
-
+  
   
 
 ### Custom setting
@@ -133,23 +142,28 @@ python run.py --merge=true
 
   ```python
   - 将target_word设为要识别的角色名
+  - language可选ch或en
   
   对于crop_size
-  - 如果人物出现时间较短, 建议找到相应片段，提取帧放入./ref/images
+  - 如果人物出现时间较短且固定, 建议找到相应片段，提取帧放入./ref/images
   - 如果人物出现次数较多, 可适当提高auto_crop_interval
   - 可以根据帧, 右键图片-编辑-画图工具, 得到角色名所在位置, crop_size格式为: 宽: 高: 左上x: 左上y
   
-  对于高质量、背景不混乱的视频可改为
-  - ocr_enhance可改为false
-  - rec_algorithm可改为CRNN，
+  对于高质量、背景不混乱的视频
+  - ocr_enhance_list可以添加不同的图像增强方法, 都是img_process.py中的函数名
+  -- 建议使用["super_resolution", "dilate", "sharpen"], 将crop_ratio设为2.0
+  -- 对于角色名乱晃的场景, 使用["super_resolution", "dilate", "sharpen"], crop_ratio=4.0，适当降低auto_crop_interval并将dbscan_eps增大
+  - rec_algorithm可改为CRNN
   - ocr_super_res可改为false
   - ocr参数如drop_score, det_db_thresh可更改
+  - 适当减小auto_crop_ratio, 最好不小于1.5(ocr识别会出现困难)
   
   对于相近的角色名，如37和77
   - 在invalid_char_list中加入错误的角色名
   - 在valid_char_list中加入正确的角色名，或可能角色名被错误识别成的名字，或是???这样的未知角色的名称
   
   对于有gpu的设备
+  - use_tensorrf设为true
   ```
 - use_tensorrt设为true
   
