@@ -109,6 +109,14 @@ python run.py --merge=true
 
 - 运行完后，可将result文件夹中的输出放入./merge/input，运行merge.py，合成文件位于./merge/output
 
+- 可以复制下面这个语句至cmd
+
+  ```
+  python run.py -m=true && python run.py --fix=true && python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thresh=0.3 --det_db_unclip_ratio=1.5 --det_db_box_thresh=0.6 --ocr_enhance_list=["grayscale","enhance","sharpen"] && python run.py --extract_frames=true && python run.py --classify=true && python run.py -fp=true --refine_intervals=true && python run.py -fp=true --get_video_segment=true && python run.py -fp=true --get_audio_segment=true && python run.py -fp=true --merge_audio_video=true
+  ```
+
+  
+
 ### Custom setting
 
 使用自定义输入输出，在--help中查看，自行修改参数。考虑到OCR不太好用，小图像识别困难，可以微调或者进行数据增强。
@@ -139,7 +147,7 @@ python run.py --merge=true
   
   对于相近的角色名，如37和77
   - 在invalid_char_list中加入错误的角色名
-  - 在valid_char_list中加入正确的角色名，或可能角色名被错误识别成的名字
+  - 在valid_char_list中加入正确的角色名，或可能角色名被错误识别成的名字，或是???这样的未知角色的名称
   
   对于有gpu的设备
   ```

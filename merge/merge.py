@@ -2,52 +2,15 @@ import os
 from glob import glob
 import subprocess
 import shutil
+from pydub import AudioSegment
 
 def merge_wav(input_files, output_path, fade_frame=3, video_frame_rate=30):
-    filter_chains = []
-
-    real_input_files = []
-    for i in range(len(input_files)):
-        real_input_files.append("-i")
-        real_input_files.append(input_files[i])
-        filter_chains.append(f"[{i}:a]")
-
-
-    fade_time = fade_frame / video_frame_rate
-    
-    filter_complex = ""
-
-    for i in range(1, len(filter_chains)):
-        if i == 1:
-            filter_complex += f"{filter_chains[0]}{filter_chains[1]}acrossfade=d={fade_time:.3f}"
-        else:
-            filter_complex += f"[a{i-1}]{filter_chains[i]}acrossfade=d={fade_time:.3f}"
-        if i+1 == len(filter_chains):
-            filter_complex += "[outa];"
-        else:
-            filter_complex += f"[a{i}];"
-    filter_complex = filter_complex.rstrip(";")
-    cmd = []
-    if len(real_input_files) > 1:
-        cmd = [  
-            'ffmpeg',  
-            *real_input_files,
-            '-filter_complex', filter_complex,
-            # '-loglevel', 'quiet',
-            '-map', '[outa]',
-            '-y',
-            output_path
-        ]
-    else:
-        cmd = [  
-            'ffmpeg',  
-            *real_input_files,
-            '-loglevel', 'quiet',
-            '-y',
-            "-c", "copy",
-            output_path
-        ]
-    subprocess.run(cmd, shell=True,check=True)  
+    fade_time = 1000 * fade_frame / video_frame_rate
+    audio = AudioSegment.from_wav(input_files[0])
+    for i in range(1, len(input_files)):
+        another = AudioSegment.from_wav(input_files[i])
+        audio = audio.append(another, crossfade=fade_time)
+    audio.export(output_path, format="wav")
 
 def merge_mp4(input_files, output_path, fade_frame=3, video_frame_rate=30):
     file_list = "temp_file_list.txt"

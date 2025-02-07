@@ -18,10 +18,10 @@
     "buf_size": 268435456,
     "classify": false,
     "classifier": "paddleocr",
-    "match_threshold": 0.6,
-    "target_word": "Âí¿âË¹",
+    "match_threshold": 0.7,
+    "target_word": "37",
     "language": [
-        "ch"
+        "en"
     ],
     "auto_crop_interval": 20,
     "ocr_enhance_list": [
@@ -38,8 +38,18 @@
     "use_multiscale_det": true,
     "det_scales": [0.5, 1.0, 2.0],
     "use_tensorrt": false,
-    "invalid_char_list": [],
-    "valid_char_list": [],
+    "invalid_char_list": [
+        "77",
+        "77?",
+        "?",
+        "??",
+        "???"
+    ],
+    "valid_char_list": [
+        "37",
+        "37/Thirty-seven",
+        "Thirty-seven"
+    ],
     "final_process": false,
     "refine_intervals": false,
     "get_audio_segment": false,

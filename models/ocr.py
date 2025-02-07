@@ -217,6 +217,10 @@ class BaseOCR():
         width = max_x-min_x
         height = max_y-min_y
         width, height, min_x, min_y = int(width), int(height), int(min_x), int(min_y)
+        min_x = max(0, min_x-width//2)
+        min_y = max(0, min_y-height//2)
+        width = 2 * width
+        height = 2 * height
         ret = f"{width}:{height}:{min_x}:{min_y}"
         with open(join(ref_params, f"{target_word}.json"), "w") as f:
             json.dump({"crop_size": ret}, f)
@@ -262,12 +266,14 @@ class EasyOCR(BaseOCR):
                 return [text[0][i][0] for i in range(len(text[0]))], [text[0][i][1][0] for i in range(len(text[0]))]
             return [text[0][i][1][0] for i in range(len(text[0]))]
         else:
+            if with_bb:
+                return [], []
             return []
         
 if __name__ == "__main__":
     
     ocr = PaddleOCR(
-        lang='ch',
+        lang='en',
         use_angle_cls=True,
         show_log=False,
         rec_algorithm="SVTR_LCNet",
@@ -279,7 +285,7 @@ if __name__ == "__main__":
         use_multiscale_det=True,
         det_scales=[0.5, 1.0, 2.0]
     ) 
-    path = r"D:\D\VertinAI\ref\images\_000115.png"
+    path = r"D:\D\VertinAI\fixedM4S_cropped_frames\1304581394\images\_000352.png"
     sr_model = cv2.dnn_superres.DnnSuperResImpl_create()
     sr_path = "D:\D\VertinAI\models\LapSRN_x2.pb"
     sr_model.readModel(sr_path)

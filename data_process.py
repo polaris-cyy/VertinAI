@@ -6,6 +6,7 @@ import time
 import shutil
 import json
 from tqdm import tqdm
+from pydub import AudioSegment
 
 audio_suffix = "30280"
 split_str = "-"
@@ -316,11 +317,10 @@ def calculate_audio_interval(input_path=None,  rewrite=False):
         return intervals
 
 def get_audio_segment(audio_path, new_audio_path, intervals, video_frame_rate=30):
-    fade_time = fade_frame / video_frame_rate
+    fade_time = 1000*fade_frame / video_frame_rate
     input_files = []
-    filter_chains = []
     print("正在提取音频片段", audio_path)
-    total_duration = fade_time
+    total_duration = fade_time / 1000
     for i, (start, end) in enumerate(intervals):
         duration = int((end - start + 1) * 1000 / video_frame_rate)
         start = int(start * 1000 / video_frame_rate)
@@ -329,12 +329,10 @@ def get_audio_segment(audio_path, new_audio_path, intervals, video_frame_rate=30
         start_sec = (start % 60000) // 1000
         start_mini = start % 1000
         start_time = f"{start_hour:02d}:{start_min:02d}:{start_sec:02d}.{start_mini:03d}"
-        total_duration += duration - fade_time
+        total_duration += duration - fade_time/1000
 
         output_segment = os.path.join(os.path.dirname(new_audio_path), f"segment_{i}.wav")
-        input_files.append("-i")
         input_files.append(output_segment)
-        filter_chains.append(f"[{i}:a]")
         subprocess.run([  
             'ffmpeg',  
             "-loglevel", "quiet",  
@@ -344,43 +342,16 @@ def get_audio_segment(audio_path, new_audio_path, intervals, video_frame_rate=30
             '-c', 'copy',
             output_segment  
         ])  
-    print("音频片段提取完成，总时长: {}秒".format(total_duration/1000))
+    print("音频片段提取完成，总时长: {:.3f}秒".format(total_duration/1000))
 
-    filter_complex = ""
+    audio = AudioSegment.from_wav(input_files[0])
+    for i in range(1, len(input_files)):
+        another = AudioSegment.from_wav(input_files[i])
+        audio = audio.append(another, crossfade=fade_time)
+    audio.export(new_audio_path, format="wav")
 
-    for i in range(1, len(filter_chains)):
-        if i == 1:
-            filter_complex += f"{filter_chains[0]}{filter_chains[1]}acrossfade=d={fade_time:.3f}"
-        else:
-            filter_complex += f"[a]{filter_chains[i]}acrossfade=d={fade_time:.3f}"
-        if i+1 == len(filter_chains):
-            filter_complex += "[outa];"
-        else:
-            filter_complex += f"[a];"
-    filter_complex = filter_complex.rstrip(";")
-
-    cmd = []
-    if len(intervals) > 1:
-        cmd = [  
-            'ffmpeg',  
-            *input_files,
-            '-filter_complex', filter_complex,
-            '-loglevel', 'quiet',
-            '-map', '[outa]',
-            '-y',
-            new_audio_path
-        ]
-    else:
-        cmd = [
-            'ffmpeg',  
-            *input_files,
-            '-loglevel', 'quiet',
-            "-c", "copy",
-            new_audio_path
-        ]
-    subprocess.run(cmd, shell=True,check=True)  
     for i in range(len(intervals)):  
-        os.remove(input_files[2*i+1])  
+        os.remove(input_files[i])  
 
 def refine_intervals(cropped_video_path, refined_interval_path, intervals, \
                       target_word, expand=10, parser=None):
@@ -410,6 +381,11 @@ def refine_intervals(cropped_video_path, refined_interval_path, intervals, \
                     continue
                 if (count < start and count + expand >= start) or \
                         (count > end and count - expand <= end):
+                    if i_count+1 < len(intervals) and count >= intervals[i_count+1][0]:
+                        i_count += 1
+                        continue
+                    if i_count != 0 and count <= intervals[i_count-1][1]:
+                        continue
                     ret, frame = cap.retrieve()
                     word = reader.readtext(frame, with_enhance=False)
                     flag = False
@@ -431,6 +407,18 @@ def refine_intervals(cropped_video_path, refined_interval_path, intervals, \
                 break
         pbar.update(total_frames - pbar.n)
     cap.release()
+    refined_intervals = []
+    i = 0
+    interval = intervals[i]
+    for i in range(1, len(intervals)):
+        if intervals[i][0] <= max_gap + interval[1]:
+            interval = (min(interval[0], intervals[i][0]), max(interval[1], intervals[i][1]))
+        else:
+            refined_intervals.append(interval)
+            interval = intervals[i]
+    refined_intervals.append(interval)
+    intervals = refined_intervals
+
     json.dump(intervals, open(refined_interval_path, "w"), indent=4)
 
 def get_video_segment(video_path, new_video_path, intervals):
@@ -483,7 +471,7 @@ def get_final_segment(input_path=None,  rewrite=False, expand=20, video_frame_ra
     if "images" not in entries or "params" not in entries:
         for entry in entries:
             get_final_segment(os.path.join(input_path, entry), rewrite, expand, video_frame_rate, keep_audio, keep_video, language, parser)
-    
+    print(input_path)
     param_path = os.path.join(input_path, "params")
     interval_info = os.path.join(param_path, "interval_info.txt")
     frame_info = os.path.join(param_path, "frame_info.txt")
@@ -576,7 +564,7 @@ def clear(input_path=None):
     if input_path is None:
         input_path = os.path.dirname(os.path.abspath(__file__))
 
-    path_list = ["data", "fixedM4S", "fixedM4S_cropped", "fixedM4S_cropped_frames", "result", "merge/input", "merge/output"]
+    path_list = ["data", "fixedM4S", "fixedM4S_cropped", "fixedM4S_cropped_frames", "merge/input", "ref"]
     for path_name in path_list:
         abs_path = os.path.join(input_path, path_name)
         if os.path.isdir(abs_path):
