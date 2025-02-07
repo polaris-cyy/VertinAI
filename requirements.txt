@@ -1,47 +1,72 @@
+absl-py==2.1.0
+addict==2.4.0
 albucore==0.0.13
 albumentations==1.4.10
 annotated-types==0.7.0
-anyio @ file:///home/conda/feedstock_root/build_artifacts/anyio_1733532585909/work
-astor @ file:///home/conda/feedstock_root/build_artifacts/astor_1733838630785/work
+anyio==4.7.0
+astor==0.8.1
+basicsr==1.4.2
 beautifulsoup4==4.12.3
-certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1734380492396/work/certifi
+certifi==2024.12.14
+chainer==7.8.1
 char-similar==0.0.1
 charset-normalizer==3.4.0
 colorama==0.4.6
+contourpy==1.3.1
+cycler==0.12.1
 Cython==3.0.11
-decorator @ file:///home/conda/feedstock_root/build_artifacts/decorator_1733236420667/work
+decorator==5.1.1
 dill==0.3.9
-exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/exceptiongroup_1733208806608/work
+exceptiongroup==1.2.2
+facexlib==0.3.0
+filelock==3.17.0
+filterpy==1.4.5
+fonttools==4.55.8
+fsspec==2025.2.0
+future==1.0.0
 gensim==3.7.1
-h11 @ file:///home/conda/feedstock_root/build_artifacts/h11_1733327467879/work
-h2 @ file:///home/conda/feedstock_root/build_artifacts/h2_1733298745555/work
-hpack @ file:///home/conda/feedstock_root/build_artifacts/hpack_1733299205993/work
-httpcore @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_httpcore_1731707562/work
-httpx @ file:///home/conda/feedstock_root/build_artifacts/httpx_1733663348460/work
-hyperframe @ file:///home/conda/feedstock_root/build_artifacts/hyperframe_1733298771451/work
-idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1733211830134/work
+gfpgan==1.3.8
+grpcio==1.70.0
+h11==0.14.0
+h2==4.1.0
+hpack==4.0.0
+httpcore==1.0.7
+httpx==0.28.1
+hyperframe==6.0.1
+idna==3.10
 imageio==2.36.1
+Jinja2==3.1.5
 joblib==1.4.2
+kiwisolver==1.4.8
 lazy_loader==0.4
+llvmlite==0.44.0
 lmdb==1.5.1
 lxml==5.3.0
 Macropodus==0.0.7
+Markdown==3.7
+MarkupSafe==3.0.2
+matplotlib==3.10.0
+mpmath==1.3.0
 multiprocess==0.70.17
-networkx==2.4
+networkx==3.4.2
+numba==0.61.0
 numpy==1.26.4
 opencv-contrib-python==4.10.0.84
 opencv-python==4.10.0.84
 opencv-python-headless==4.10.0.84
-opt-einsum @ file:///tmp/build/80754af9/opt_einsum_1621500238896/work
+opt-einsum==3.3.0
 packaging==24.2
-paddlepaddle @ file:///C:/package/paddlepaddle-2.6.2-cp310-cp310-win_amd64.whl#sha256=f7c8ac07dbf0ba5c42a8a897e9dd7aee594f68d7954961e6dcdfe53d87bc820e
+paddlepaddle==2.6.2
 pandas==2.2.3
 passlib==1.7.1
-pillow @ file:///D:/bld/pillow_1729065755620/work
+pillow==10.4.0
+pip==25.0
+platformdirs==4.3.6
 protobuf==3.20.2
 pyclipper==1.3.0.post6
 pydantic==2.10.4
 pydantic_core==2.27.2
+pyparsing==3.2.1
 python-dateutil==2.9.0.post0
 python-docx==1.1.2
 pytz==2024.2
@@ -51,16 +76,26 @@ requests==2.32.3
 scikit-image==0.25.0
 scikit-learn==1.6.0
 scipy==1.14.1
+setuptools==75.8.0
 shapely==2.0.6
 six==1.17.0
 smart-open==7.1.0
-sniffio @ file:///home/conda/feedstock_root/build_artifacts/sniffio_1733244044561/work
+sniffio==1.3.1
 soupsieve==2.6
+sympy==1.13.1
+tb-nightly==2.19.0a20250205
+tensorboard-data-server==0.7.2
 threadpoolctl==3.5.0
 tifffile==2024.12.12
 tomli==2.2.1
+torch==2.6.0
+torchvision==0.21.0
 tqdm==4.31.1
-typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1733188668063/work
+typing_extensions==4.12.2
 tzdata==2024.2
 urllib3==2.2.3
+Wand==0.6.13
+Werkzeug==3.1.3
+wheel==0.45.1
 wrapt==1.17.0
+yapf==0.43.0

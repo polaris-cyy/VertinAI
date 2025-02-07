@@ -3,7 +3,7 @@ from glob import glob
 import subprocess
 import shutil
 
-def merge_wav(input_files, output_path, fade_frame=2, video_frame_rate=30):
+def merge_wav(input_files, output_path, fade_frame=3, video_frame_rate=30):
     filter_chains = []
 
     real_input_files = []
@@ -13,7 +13,8 @@ def merge_wav(input_files, output_path, fade_frame=2, video_frame_rate=30):
         filter_chains.append(f"[{i}:a]")
 
 
-    fade_time = 2 * fade_frame / video_frame_rate
+    fade_time = fade_frame / video_frame_rate
+    
     filter_complex = ""
 
     for i in range(1, len(filter_chains)):
@@ -26,19 +27,29 @@ def merge_wav(input_files, output_path, fade_frame=2, video_frame_rate=30):
         else:
             filter_complex += f"[a{i}];"
     filter_complex = filter_complex.rstrip(";")
+    cmd = []
+    if len(real_input_files) > 1:
+        cmd = [  
+            'ffmpeg',  
+            *real_input_files,
+            '-filter_complex', filter_complex,
+            # '-loglevel', 'quiet',
+            '-map', '[outa]',
+            '-y',
+            output_path
+        ]
+    else:
+        cmd = [  
+            'ffmpeg',  
+            *real_input_files,
+            '-loglevel', 'quiet',
+            '-y',
+            "-c", "copy",
+            output_path
+        ]
+    subprocess.run(cmd, shell=True,check=True)  
 
-    cmd = [  
-        'ffmpeg',  
-        *real_input_files,
-        '-filter_complex', filter_complex,
-        '-loglevel', 'quiet',
-        '-map', '[outa]',
-        '-y',
-        output_path
-    ]
-    subprocess.run(cmd, check=True)  
-
-def merge_mp4(input_files, output_path, fade_frame=2, video_frame_rate=30):
+def merge_mp4(input_files, output_path, fade_frame=3, video_frame_rate=30):
     file_list = "temp_file_list.txt"
     with open(file_list, "w") as f:
         for file in input_files:
@@ -57,7 +68,7 @@ def merge_mp4(input_files, output_path, fade_frame=2, video_frame_rate=30):
     os.remove(file_list)
 
 
-def merge(suffix='auto', fade_frame=2, video_frame_rate=30):
+def merge(suffix='auto', fade_frame=3, video_frame_rate=30):
     pwd = os.path.dirname(os.path.abspath(__file__))
     input_path = os.path.join(pwd, 'input')
     output_path = os.path.join(pwd, 'output')
@@ -73,7 +84,8 @@ def merge(suffix='auto', fade_frame=2, video_frame_rate=30):
             suffix = 'mp4'
         else:
             raise NotImplementedError
-    input_files = [os.path.join(pwd, "input", x) for x in input_files if x.endswith(suffix)]    
+        
+    input_files = [os.path.join(input_path, x) for x in input_files if x.endswith(suffix)]    
     output_path = os.path.join(output_path, 'output.'+suffix)
 
     if input_files == []:
@@ -99,6 +111,6 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--suffix', type=str, default='auto', help='suffix of input files, auto for auto detect')
-    parser.add_argument('--fade_frame', type=int, default=2, help='number of frames for audio fade in/out')
+    parser.add_argument('--fade_frame', type=int, default=3, help='number of frames for audio fade in/out')
     parser.add_argument('--video_frame_rate', type=int, default=30, help='frame rate of video')
     merge(**vars(parser.parse_args()))

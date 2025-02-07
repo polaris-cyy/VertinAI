@@ -24,7 +24,7 @@ class BaseOCR():
         self.use_tensorrt = opt.use_tensorrt
         self.threshold = opt.match_threshold
         self.invalid_char_list = opt.invalid_char_list
-        self.valid_char_list = opt.valide_char_list
+        self.valid_char_list = opt.valid_char_list
         self.drop_score=opt.drop_score
         self.det_db_thresh = opt.det_db_thresh
         self.det_db_box_thresh = opt.det_db_box_thresh
@@ -43,7 +43,7 @@ class BaseOCR():
             self.language = [self.language]
 
     # Every subclass should implement its own readtext method
-    def readtext(self, image_path, with_bb=False):
+    def readtext(self, image_path, with_bb=False, with_enhance=True):
         raise NotImplementedError
     
     def readtext_from_folder(self, folder_path):
@@ -58,6 +58,7 @@ class BaseOCR():
                     last_time = current_time
                 text = self.readtext(file_path)
                 text_list.append(text)
+            pbar.update(len(glob.glob(join(folder_path, '*.jpg')) + glob.glob(join(folder_path, '*.png'))) - pbar.n)
         return text_list
 
     def eng_match(self, word, target_word):
@@ -69,7 +70,6 @@ class BaseOCR():
     
     def ch_match(self, word, target_word):
         from char_similar import std_cal_sim
-        
         rat = difflib.SequenceMatcher(None, word, target_word).ratio()
         if rat >= self.threshold:
             return True
@@ -89,10 +89,15 @@ class BaseOCR():
         if word == target_word or word in self.valid_char_list:
             return True
         
-        if 'en' in self.language:
-            return self.eng_match(word, target_word)
-        elif 'ch' in self.language:
-            return self.ch_match(word, target_word)
+        if target_word not in self.valid_char_list:
+            self.valid_char_list.append(target_word)
+        res = []
+        for tword in self.valid_char_list:
+            if 'en' in self.language:
+                res.append(self.eng_match(word, tword))
+            elif 'ch' in self.language:
+                res.append(self.ch_match(word, tword))
+        return any(res)
 
     def find_index_by_word(self, folder_path, target_word, rewrite=False):
         if folder_path == None:
@@ -123,6 +128,7 @@ class BaseOCR():
                 prob_list = [self.fuzzy_match(word, target_word) for word in text]
                 if any(prob_list):
                     res_list.append(i)
+            pbar.update(len(text_list) - pbar.n)
         if isfile(info_path):
             os.remove(info_path)
         with open(info_path, "w") as f:
@@ -181,25 +187,28 @@ class BaseOCR():
                 if current_time - last_time > 0.5:
                     pbar.update(i - pbar.n)
                 
-                bb, texts = self.readtext(join(ref_img, image), with_bb=True)
+                bb, texts = self.readtext(join(ref_img, image), with_bb=True, with_enhance=False)
                 for i, text in enumerate(texts):
-                    if self.fuzzy_match(text, target_word):
+                    if text.startswith(target_word) or self.fuzzy_match(text, target_word):
                         boxes.append(bb[i])
                         center = (int((bb[i][0][0] + bb[i][2][0])/2), int((bb[i][0][1] + bb[i][2][1])/2))
                         centers.append(center)
+            pbar.update(len(os.listdir(ref_img)) - pbar.n)
         # step 2: cluster centers
 
         centers = np.array(centers)
-        # print(centers)
+        print(f"共有{len(centers)}/{len(os.listdir(ref_img))}个候选位置")
         dbscan = DBSCAN(eps=40, min_samples=1)
-        clusters = dbscan.fit_predict(centers)
+        labels = dbscan.fit_predict(centers)
         # print(clusters)
-        unique_labels, counts = np.unique(clusters, return_counts=True)
+        unique_labels, counts = np.unique(labels, return_counts=True)
         # print(unique_labels, counts)
         main_cluster_label = unique_labels[np.argmax(counts)]
         # print(main_cluster_label)
         boxes = np.array(boxes)
-        main_cluster_points = boxes[clusters==main_cluster_label]
+        boxes = boxes[labels == main_cluster_label]
+
+
         # step 3: get rect
         min_x = np.min(boxes[:, :, 0])
         min_y = np.min(boxes[:, :, 1])
@@ -212,11 +221,6 @@ class BaseOCR():
         with open(join(ref_params, f"{target_word}.json"), "w") as f:
             json.dump({"crop_size": ret}, f)
         print("建议crop size: {}".format(ret))
-        if isfile(join(ref_params, f"{target_word}.json")):
-            if exists(ref_video):
-                os.remove(ref_video)
-            if exists(ref_img):
-                shutil.rmtree(ref_img)
         return ret
     
 # class EasyOCR(BaseOCR):
@@ -243,14 +247,15 @@ class EasyOCR(BaseOCR):
             use_tensorrt=self.use_tensorrt,
             ) 
     
-    def readtext(self, image_path, with_bb=False):
+    def readtext(self, image_path, with_bb=False, with_enhance=True):
         if isfile(image_path):
             image_path = cv2.imread(image_path)
-        for enhance_step in self.ocr_enhance_list:
-            if enhance_step == "super_resolution":
-                image_path = super_resolution(image_path, self.sr_model)
-            else: 
-                image_path = eval(enhance_step)(image_path)
+        if with_enhance:
+            for enhance_step in self.ocr_enhance_list:
+                if enhance_step == "super_resolution":
+                    image_path = super_resolution(image_path, self.sr_model)
+                else: 
+                    image_path = eval(enhance_step)(image_path)
         text = self.reader.ocr(image_path, cls=True)
         if text[0] != None:
             if with_bb:
@@ -274,17 +279,24 @@ if __name__ == "__main__":
         use_multiscale_det=True,
         det_scales=[0.5, 1.0, 2.0]
     ) 
-    path = r"D:\D\VertinAI\fixedM4S_cropped_frames\26761300169\images\_005000.png"
+    path = r"D:\D\VertinAI\ref\images\_000115.png"
     sr_model = cv2.dnn_superres.DnnSuperResImpl_create()
     sr_path = "D:\D\VertinAI\models\LapSRN_x2.pb"
     sr_model.readModel(sr_path)
     sr_model.setModel("lapsrn", 2)  
-    print(sr_model)
-    img = path
-    img = super_resolution(img, sr_model)
-    img = sharpen(img)
+    img = grayscale(path)
+    img = enhance(path)
+    img = sharpen(path)
     
+    # img = super_resolution(img, sr_model)
+    # img = dilate(img)
+    # img = sharpen(img)
+
+    # img = grayscale(img)
+    # img = sharpen(img)
+
+    text = ocr.ocr(img, cls=True)
     cv2.imshow("img", img)
     cv2.waitKey(0)
-    text = ocr.ocr(img, cls=True)
+    # text = ocr.ocr(img, cls=True)
     print(text)

@@ -18,7 +18,7 @@
     "buf_size": 268435456,
     "classify": false,
     "classifier": "paddleocr",
-    "match_threshold": 0.7,
+    "match_threshold": 0.6,
     "target_word": "Âí¿âË¹",
     "language": [
         "ch"
@@ -26,6 +26,7 @@
     "auto_crop_interval": 20,
     "ocr_enhance_list": [
         "super_resolution",
+        "dilate",
         "sharpen"
     ],
     "rec_algorithm": "SVTR_LCNet",
@@ -38,11 +39,15 @@
     "det_scales": [0.5, 1.0, 2.0],
     "use_tensorrt": false,
     "invalid_char_list": [],
-    "valide_char_list": [],
+    "valid_char_list": [],
     "final_process": false,
+    "refine_intervals": false,
+    "get_audio_segment": false,
+    "get_video_segment": false,
+    "merge_audio_video": false,
     "video_frame_rate": 30,
-    "expand": 20,
+    "expand": 10,
     "keep_audio": true,
-    "keep_video": true,
+    "keep_video": false,
     "clear": false
 }

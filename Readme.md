@@ -25,6 +25,9 @@ ffmpeg
 # paddleocr 安装方式 https://paddlepaddle.github.io/PaddleOCR/main/ppocr/installation.html#2-paddlepaddle-20
 paddle
 paddleocr
+
+pip install -r requirements.txt --no-dependencies
+
 ```
 
 ## Structure
@@ -43,7 +46,7 @@ paddleocr
 |  |--- <file folder>
 |     |--- <cached files>
 |--- merge
-|  |--- merge.py #运行此文件，合并input中的mp3或mp4，生成文件位于output
+|  |--- merge.py #运行此文件，合并input中的wav或mp4，生成文件位于output
 |  |--- input
 |  |--- output
 |--- ref
@@ -55,7 +58,7 @@ paddleocr
 |     |--- xxx_fixed_final.mp4 #目标文件
 |--- fixedM4S
 |  |--- <file folder>
-|     |--- xxx_fixed.mp3
+|     |--- xxx_fixed.wav
 |     |--- xxx_fixed.mp4
 |--- fixedM4S_cropped
 |  |--- <file folder>
@@ -86,16 +89,22 @@ python run.py -m=true
 # 将.m4s格式转为
 python run.py --fix=true
 # 默认自动识别图片，Vertin名字附近，其它要自设参数。
-python run.py --crop_video=true --crop_size=auto --target_word=维尔汀
+python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thresh=0.3 --det_db_unclip_ratio=1.5 --det_db_box_thresh=0.6 --ocr_enhance_list=["grayscale","enhance","sharpen"]
 # 提取帧
 python run.py --extract_frames=true
 # 默认识别维尔汀，30帧视频
-python run.py --classify=true --target_word=维尔汀
+python run.py --classify=true
 #获得最终结果
-python run.py --final_process=true --target_word=维尔汀
+python run.py -fp=true --refine_intervals=true
+python run.py -fp=true --get_video_segment=true
+python run.py -fp=true --get_audio_segment=true
+python run.py -fp=true --merge_audio_video=true
 
-# <可选> 清除中间文件
+# <可选, 慎用!!!> 清除中间文件
 python run.py --clear=true
+
+# <可选> 按序合并result中的文件
+python run.py --merge=true
 ```
 
 - 运行完后，可将result文件夹中的输出放入./merge/input，运行merge.py，合成文件位于./merge/output
@@ -133,6 +142,7 @@ python run.py --clear=true
   - 在valid_char_list中加入正确的角色名，或可能角色名被错误识别成的名字
   
   对于有gpu的设备
+  ```
 - use_tensorrt设为true
   
   对于想保留纯音频/纯视频的
@@ -140,4 +150,5 @@ python run.py --clear=true
   ```
   
   
+  ```
 
