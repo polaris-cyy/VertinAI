@@ -18,14 +18,14 @@
     "buf_size": 268435456,
     "classify": false,
     "classifier": "paddleocr",
-    "match_threshold": 0.9,
-    "target_word": "37",
+    "match_threshold": 0.7,
+    "target_word": "Î¬¶ûÍ¡",
     "language": [
         "ch"
     ],
     "auto_crop_interval": 20,
     "always_auto_crop": false,
-    "crop_ratio": 2.0, 
+    "crop_ratio": 4.0, 
     "ocr_enhance_list": [
         "super_resolution"
     ],
@@ -39,25 +39,24 @@
     "det_scales": [0.5, 1.0, 2.0],
     "use_tensorrt": false,
     "invalid_char_list": [
-        "77",
-        "77?"
+        "???",
+        "Ê®ËÄÐÐÊ«",
+        "37",
+        "Ë¹ÄÎµÂ"
     ],
     "valid_char_list": [
-        "37",
-        "37/Thirty-seven",
-        "Thirty-seven",
-        "?",
-        "??",
-        "???"
+        "Î¬¶ûÍ¡",
+        "Vertin",
+        "Î¬¶ûÍ¡/Vertin"
     ],
     "dbscan_eps": 20,
     "dbscan_min_samples": 1,
     "only_one_return": true,
     "final_process": false,
-    "refine_intervals": true,
-    "get_audio_segment": true,
-    "get_video_segment": true,
-    "merge_audio_video": true,
+    "refine_intervals": false,
+    "get_audio_segment": false,
+    "get_video_segment": false,
+    "merge_audio_video": false,
     "video_frame_rate": 30,
     "expand": 10,
     "keep_audio": true,

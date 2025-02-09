@@ -111,31 +111,16 @@ python run.py --merge=true
 
 - 可以复制下面这个语句至cmd
 
-  ```
+  ```bash
   python run.py -m=true && python run.py --fix=true && python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thresh=0.3 --det_db_unclip_ratio=1.5 --det_db_box_thresh=0.6 --ocr_enhance_list=["grayscale","enhance","sharpen"] --crop_ratio=4.0 && python run.py --extract_frames=true && python run.py --classify=true && python run.py -fp=true --refine_intervals=true && python run.py -fp=true --get_video_segment=true && python run.py -fp=true --get_audio_segment=true && python run.py -fp=true --merge_audio_video=true
-  
   ```
+
+### Custom settings
+
 ```
-  
-  
-
-### Custom setting
-
-使用自定义输入输出，在--help中查看，自行修改参数。考虑到OCR不太好用，小图像识别困难，可以微调或者进行数据增强。
-
-代码中，可能有部分常量需要修改，如：
-
-- 4K的后缀为30120，1080p的后缀为30080等；音频的后缀始终为30280。请使用ctrl+f自行修改。
-
-- 不同分辨率/视频/人物需要对不同的位置进行crop，或者使用auto_crop
-
-- video_frame_rate默认为30，请注意是否使用60帧视频进行处理
-
-- 其余default_config.json中建议修改的自定义常量如下：
-
-  ```python
   - 将target_word设为要识别的角色名
   - language可选ch或en
+  - default_config.json编码不是utf-8，如有需要可以更改
   
   对于crop_size
   - 如果人物出现时间较短且固定, 建议找到相应片段，提取帧放入./ref/images

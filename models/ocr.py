@@ -151,6 +151,9 @@ class BaseOCR():
         import data_process
 
         # step 1: get centers and boxes
+        temp_only_one_return = self.only_one_return
+        if self.only_one_return:
+            self.only_one_return = False
         ref_path = join(dirname(dirname(abspath(__file__))), "ref")
         if not exists(ref_path):
             os.makedirs(ref_path)
@@ -197,6 +200,7 @@ class BaseOCR():
                     pbar.update(i - pbar.n)
                 
                 bb, texts = self.readtext(join(ref_img, image), with_bb=True, with_enhance=False)
+                
                 for i, text in enumerate(texts):
                     if self.fuzzy_match(text, target_word):
                         boxes.append(bb[i])
@@ -235,6 +239,8 @@ class BaseOCR():
         with open(join(ref_params, f"{target_word}.json"), "w") as f:
             json.dump({"crop_size": ret}, f)
         print("建议crop size: {}".format(ret))
+
+        self.only_one_return = temp_only_one_return
         return ret
     
 # class EasyOCR(BaseOCR):
@@ -323,13 +329,13 @@ if __name__ == "__main__":
         det_scales=[0.5, 1.0, 2.0]
         
     ) 
-    path = r"D:\D\VertinAI\14160.png"
+    path = r"D:\D\VertinAI\1.png"
     sr_model = cv2.dnn_superres.DnnSuperResImpl_create()
     sr_path = "D:\D\VertinAI\models\LapSRN_x2.pb"
     sr_model.readModel(sr_path)
     sr_model.setModel("lapsrn", 2)  
     img = cv2.imread(path)
-    img = super_resolution(img, sr_model)
+    # img = super_resolution(img, sr_model)
     # img = grayscale(path)
     
     # img = super_resolution(img, sr_model)
@@ -339,8 +345,8 @@ if __name__ == "__main__":
     # img = grayscale(img)
     # img = sharpen(img)
 
-    text = ocr.ocr(img, cls=True)[0][0][-1][0]
-    print(EasyOCR.ch_match("37", text))
+    text = ocr.ocr(img, cls=True)
+    print(text)
     cv2.imshow("img", img)
     cv2.waitKey(0)
     # text = ocr.ocr(img, cls=True)

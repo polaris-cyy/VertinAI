@@ -509,7 +509,7 @@ def clear(input_path=None):
     if input_path is None:
         input_path = os.path.dirname(os.path.abspath(__file__))
 
-    path_list = ["data", "fixedM4S", "fixedM4S_cropped", "fixedM4S_cropped_frames", "merge/input", "ref"]
+    path_list = ["data", "fixedM4S", "fixedM4S_cropped", "fixedM4S_cropped_frames", "merge/input", "ref/images", "ref/video"]
     for path_name in path_list:
         abs_path = os.path.join(input_path, path_name)
         if os.path.isdir(abs_path):
