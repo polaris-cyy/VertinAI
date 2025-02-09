@@ -19,6 +19,7 @@ decorator==5.1.1
 dill==0.3.9
 exceptiongroup==1.2.2
 facexlib==0.3.0
+ffmpeg-python==0.2.0
 filelock==3.17.0
 filterpy==1.4.5
 fonttools==4.55.8
@@ -35,6 +36,7 @@ httpx==0.28.1
 hyperframe==6.0.1
 idna==3.10
 imageio==2.36.1
+imageio-ffmpeg==0.6.0
 Jinja2==3.1.5
 joblib==1.4.2
 kiwisolver==1.4.8
@@ -46,6 +48,7 @@ Macropodus==0.0.7
 Markdown==3.7
 MarkupSafe==3.0.2
 matplotlib==3.10.0
+moviepy==2.1.2
 mpmath==1.3.0
 multiprocess==0.70.17
 networkx==3.4.2
@@ -62,13 +65,16 @@ passlib==1.7.1
 pillow==10.4.0
 pip==25.0
 platformdirs==4.3.6
+proglog==0.1.10
 protobuf==3.20.2
 pyclipper==1.3.0.post6
 pydantic==2.10.4
 pydantic_core==2.27.2
+pydub==0.25.1
 pyparsing==3.2.1
 python-dateutil==2.9.0.post0
 python-docx==1.1.2
+python-dotenv==1.0.1
 pytz==2024.2
 PyYAML==6.0.2
 RapidFuzz==3.11.0

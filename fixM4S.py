@@ -1,5 +1,8 @@
 import os
 import subprocess
+import moviepy.audio
+import ffmpeg
+import moviepy
 
 def fixM4S(targetPath, outputPath=None, bufSize:int = 256 * 1024 * 1024) -> str:
     assert bufSize > 0
@@ -48,13 +51,25 @@ def modify_extension(targetPath: str):
         if os.path.basename(targetPath).replace('.m4s', '.wav') in os.listdir(os.path.dirname(targetPath)):
             print(f"{targetPath.replace('.m4s', '.wav')} 已存在...")
             return
-        cmd = f"ffmpeg -i {targetPath} -loglevel quiet -ar 48000 {targetPath.replace('.m4s', '.wav')}"
+        output_path = targetPath.replace('.m4s', '.wav')
+        (
+            ffmpeg
+            .input(targetPath)
+            .output(output_path, format='wav', ar='48000')
+            .run(quiet=True)
+        )
     else:
         if os.path.basename(targetPath).replace('.m4s', '.mp4') in os.listdir(os.path.dirname(targetPath)):
             print(f"{targetPath.replace('.m4s', '.mp4')} 已存在...")
             return
-        cmd = f"ffmpeg -i {targetPath} -loglevel quiet -c copy {targetPath.replace('.m4s', '.mp4')}"
-    subprocess.call(cmd, shell=True)
+        output_path = targetPath.replace('.m4s', '.mp4')
+        (
+            ffmpeg
+            .input(targetPath)
+            .output(output_path, c="copy")
+            .run(quiet=True)
+        )
+
     os.remove(targetPath)
     
 def modify_extension_from_folder(targetFolder):

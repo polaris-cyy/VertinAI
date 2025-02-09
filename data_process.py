@@ -1,12 +1,14 @@
-import subprocess
 import os
-import glob
 import ast
 import time
 import shutil
 import json
 from tqdm import tqdm
 from pydub import AudioSegment
+from moviepy import VideoFileClip
+from moviepy import AudioFileClip
+import cv2
+import ffmpeg
 
 audio_suffix = "30280"
 split_str = "-"
@@ -34,17 +36,20 @@ def merge_audio_video(audio_path, video_path, output_path="output.mp4", keep_aud
     if not os.path.isfile(video_path):
         raise FileNotFoundError("Video file {} not found".format(video_path))
     print("Merging audio and video from {} and {} to {}".format(audio_path, video_path, output_path))
-    cmd = [
-        'ffmpeg',  
-        "-loglevel", "quiet",
-        '-i', video_path,    # 输入视频文件  
-        '-i', audio_path,    # 输入音频文件  
-        '-c:v', 'copy',      # 复制视频流，不进行转码  
-        '-c:a', 'aac',       # 使用 AAC 编码音频  
-        '-strict', 'experimental',  # 允许使用实验性的编解码器  
-        output_path
-    ]
-    subprocess.run(cmd, shell =True, check=True)
+    
+    ad = ffmpeg.input(audio_path)
+    vd = ffmpeg.input(video_path)
+    (
+        ffmpeg.output
+        (
+            vd,
+            ad,
+            output_path,
+            acodec="aac",
+            vcodec="copy"
+        )
+        .run(quiet=True)
+    )
 
     if not keep_audio:
         os.remove(audio_path)
@@ -79,74 +84,6 @@ def merge_audio_video_from_folder(input_folder, output_folder=None, keep_audio=F
         )
     else:
         print("More than one audio or video file found, skipping")
-        
-def video_compress(
-        input_path,
-        output_path=None,
-        frame_rate="25",
-        rewrite=False,
-        high_quality=False,
-        num_threads="2"
-):
-    if input_path is None:
-        raise ValueError("Input path cannot be None")
-    if not os.path.isfile(input_path):
-        raise FileNotFoundError("Input file {} not found".format(input_path))
-    if output_path is None:
-        file_basename = os.path.basename(input_path)
-        file_name, file_extension = os.path.splitext(file_basename)
-        file_name = f"{file_name}_compressed{file_extension}"
-        output_path = os.path.join(os.path.dirname(input_path), file_name)
-    if os.path.exists(output_path):
-        if rewrite:
-            os.remove(output_path)
-        else:
-            return
-    cmd = []
-    if high_quality:
-        cmd = [
-            "ffmpeg",
-            "-i", input_path,
-            "-r", frame_rate,
-            "-c:v", "libx264",
-            "-crf", "18",
-            "-preset", "slow",
-            "-loglevel", "quiet",
-            "-threads", num_threads,
-            output_path
-        ]
-    else:
-        cmd = [
-            "ffmpeg",
-            "-i", input_path,
-            "-r", frame_rate,
-            "-loglevel", "quiet",
-            "-threads", num_threads,
-            output_path
-        ]
-    subprocess.run(cmd, shell=True)
-
-def video_compress_from_folder(
-        input_folder=None,
-        output_folder = None,
-        frame_rate = "25",
-        rewrite = False,
-        high_quality=False,
-        num_threads="2"
-):
-    if input_folder is None:
-        input_folder = os.path.join(os.getcwd(), "fixedM4S")
-    print(input_folder)
-    if not os.path.isdir(input_folder):
-        raise FileNotFoundError("Input folder {} not found".format(input_folder))
-    if output_folder is None:
-        folder_name = os.path.dirname(input_folder)
-        output_folder = os.path.join(folder_name, os.path.splitext(os.path.basename(input_folder))[0] + "_compressed")
-    if not os.path.isdir(output_folder):
-        os.makedirs(output_folder)
-    for input_path in glob.glob(os.path.join(input_folder, "*.mp4")):
-        output_path = os.path.join(output_folder, os.path.basename(input_path))
-        video_compress(input_path, output_path, frame_rate, rewrite=rewrite, high_quality=high_quality, num_threads=num_threads)
 
 def video_crop(
         input_path=None,
@@ -158,7 +95,7 @@ def video_crop(
 ):
 
     if not os.path.isfile(input_path):
-        raise FileNotFoundError("Input file {} not found".format(input_path))
+        raise FileNotFoundError("输入文件{}不存在".format(input_path))
     if output_path is None:
         file_basename = os.path.basename(input_path)
         file_name, file_extension = os.path.splitext(file_basename)
@@ -170,19 +107,16 @@ def video_crop(
         if rewrite:
             os.remove(output_path)
         else:
-            print("Output file {} already exists, skipping".format(output_path))
+            print("输出文件{}已存在".format(output_path))
             return
-    cmd = [
-        "ffmpeg",
-        "-i", input_path,
-        # "-vf", f"crop={crop_size}",
-        "-vf", "format=gray",
-        "-filter:v", "crop="+crop_size,
-        "-threads", num_threads,
-        "-loglevel", "quiet",
-        output_path
-    ]
-    subprocess.run(cmd, shell=True)
+    width, height, x1, y1 = map(int, crop_size.split(":"))
+    (
+        ffmpeg
+        .input(input_path)
+        .filter("crop", width, height, x1, y1)
+        .output(output_path)
+        .run(capture_stdout=True, capture_stderr=True)
+    )
     return output_path
 
 def video_crop_from_folder(
@@ -231,17 +165,27 @@ def extract_frames(
     if not os.path.isdir(os.path.join(output_path, "params")):
         os.makedirs(os.path.join(output_path, "params"))
     
-    print("Extracting frames from video ", input_path)
-    cmd = [
-        "ffmpeg", 
-        "-i", input_path,
-        '-vf', f'select=eq(mod(n\,{frame_interval})\, 0)',
-        '-vsync', '0',
-        "-loglevel", "quiet",
-        "-threads", num_threads,
-        os.path.join(os.path.join(output_path, "images"), r"_%06d.png")
-    ]
-    subprocess.run(cmd, shell=True)
+    print("正在提取帧: ", input_path)
+    
+    cap = cv2.VideoCapture(input_path)
+    frame_count = 0
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    last_time = time.time()
+    with tqdm(total=total_frames, desc="提取进度", position=0, leave=True, ncols=100) as pbar:
+        while True:
+            ret = cap.grab()
+            if not ret:
+                break
+            frame_count += 1
+            current_time = time.time()
+            if current_time - last_time > 0.2:
+                pbar.update(frame_count - pbar.n)
+            if frame_count % frame_interval == 0:
+                ret, frame = cap.retrieve()
+                cv2.imwrite(os.path.join(os.path.join(output_path, "images"), f"{frame_count: 08d}.png"), frame)
+        pbar.update(total_frames - pbar.n)
+        cap.release()
+
     with open(os.path.join(os.path.join(output_path, "params"), "frame_info.txt"), "w") as f:
         f.write(f"Frame_interval: {frame_interval}\n")
     return frame_interval
@@ -317,36 +261,34 @@ def calculate_audio_interval(input_path=None,  rewrite=False):
         return intervals
 
 def get_audio_segment(audio_path, new_audio_path, intervals, video_frame_rate=30):
+    if os.path.isfile(new_audio_path):
+        print("音频{}已存在".format(new_audio_path))
+        return
+
     fade_time = 1000*fade_frame / video_frame_rate
     input_files = []
     print("正在提取音频片段", audio_path)
     total_duration = fade_time / 1000
     for i, (start, end) in enumerate(intervals):
         duration = int((end - start + 1) * 1000 / video_frame_rate)
-        start = int(start * 1000 / video_frame_rate)
-        start_hour = start // 3600000
-        start_min = (start % 3600000) // 60000
-        start_sec = (start % 60000) // 1000
-        start_mini = start % 1000
-        start_time = f"{start_hour:02d}:{start_min:02d}:{start_sec:02d}.{start_mini:03d}"
+        start_time = int(start * 1000 / video_frame_rate)
         total_duration += duration - fade_time/1000
 
         output_segment = os.path.join(os.path.dirname(new_audio_path), f"segment_{i}.wav")
         input_files.append(output_segment)
-        subprocess.run([  
-            'ffmpeg',  
-            "-loglevel", "quiet",  
-            '-i', audio_path + ".wav",  
-            '-ss', str(start_time),  
-            '-t', str(duration) + "ms", 
-            '-c', 'copy',
-            output_segment  
-        ])  
+        if not audio_path.endswith(".wav"):
+            audio_path = audio_path + ".wav"
+        
+        audio = AudioSegment.from_file(audio_path, format="wav")
+        cropped_audio: AudioSegment = audio[start_time: start_time + duration]
+        cropped_audio.export(output_segment, format="wav")
     print("音频片段提取完成，总时长: {:.3f}秒".format(total_duration/1000))
 
     audio = AudioSegment.from_wav(input_files[0])
     for i in range(1, len(input_files)):
         another = AudioSegment.from_wav(input_files[i])
+        if another.duration_seconds * 1000 < fade_time:
+            continue
         audio = audio.append(another, crossfade=fade_time)
     audio.export(new_audio_path, format="wav")
 
@@ -355,7 +297,6 @@ def get_audio_segment(audio_path, new_audio_path, intervals, video_frame_rate=30
 
 def refine_intervals(cropped_video_path, refined_interval_path, intervals, \
                       target_word, expand=10, parser=None):
-    import cv2
     from models.ocr import EasyOCR
     reader = EasyOCR(parser)
     cap = cv2.VideoCapture(cropped_video_path)
@@ -364,17 +305,19 @@ def refine_intervals(cropped_video_path, refined_interval_path, intervals, \
     i_count = 0
     last_update_time = time.time()
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    
+
+
     print("--------------细化间隔--------------")
     
     with tqdm(total=total_frames, desc="处理进度", position=0, leave=True, ncols=100) as pbar:
         while (cap.isOpened()):
+            current_time = time.time()
+            if current_time - last_update_time > 0.2:
+                last_update_time = current_time
+                pbar.update(count - pbar.n)
+
             ret = cap.grab()
             if ret == True and i_count < len(intervals):
-                current_time = time.time()
-                if current_time - last_update_time > 0.4:
-                    last_update_time = current_time
-                    pbar.update(count - pbar.n)
                 count += 1
                 start, end = intervals[i_count]
                 if count >= start and count <= end:
@@ -389,12 +332,9 @@ def refine_intervals(cropped_video_path, refined_interval_path, intervals, \
                     ret, frame = cap.retrieve()
                     word = reader.readtext(frame, with_enhance=False)
                     flag = False
+                    word = reader.readtext(frame, with_enhance=True)
                     if word != []:
                         flag = any([reader.fuzzy_match(w, target_word) for w in word])
-                    if not flag:
-                        word = reader.readtext(frame, with_enhance=True)
-                        if word != []:
-                            flag = any([reader.fuzzy_match(w, target_word) for w in word])
                     if not flag:
                         continue
                     if count < start and count + expand >= start:
@@ -423,6 +363,11 @@ def refine_intervals(cropped_video_path, refined_interval_path, intervals, \
 
 def get_video_segment(video_path, new_video_path, intervals):
     import cv2
+
+    if isinstance(video_path, str) and os.path.isfile(new_video_path):
+        print("视频{}已存在".format(new_video_path))
+        return
+
     cap = cv2.VideoCapture(video_path)
     fps_video = cap.get(cv2.CAP_PROP_FPS)
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -441,7 +386,7 @@ def get_video_segment(video_path, new_video_path, intervals):
             if ret == True and i_count < len(intervals):
                 current_time = time.time()
                 count += 1
-                if current_time - last_update_time > 0.4:
+                if current_time - last_update_time > 0.2:
                     last_update_time = current_time
                     pbar.update(count - pbar.n)
                 start, end = intervals[i_count]
@@ -504,7 +449,7 @@ def get_final_segment(input_path=None,  rewrite=False, expand=20, video_frame_ra
         return
 
     for i, (start, end) in enumerate(intervals):
-        intervals[i] = (frame_rate*(start), frame_rate*(end))
+        intervals[i] = (frame_rate*(start+1), frame_rate*(end+1))
     audio_path = None
     video_path = None
     output_path = None

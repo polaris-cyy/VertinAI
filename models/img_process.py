@@ -4,7 +4,7 @@ import os
 
 # 二值化
 def binary(img, block_size=21, c=5):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     binary = cv2.adaptiveThreshold(
@@ -15,14 +15,14 @@ def binary(img, block_size=21, c=5):
 
 # 灰度化
 def grayscale(img):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     return gray
 
 #clahe增强
 def enhance(img):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
@@ -34,7 +34,7 @@ def enhance(img):
 
 # 放大
 def enlarge(img, scale_factor=2.0, max_size=1000):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     if max(img.shape) > max_size:
         return img
@@ -43,7 +43,7 @@ def enlarge(img, scale_factor=2.0, max_size=1000):
 
 # 锐化
 def sharpen(img):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
     sharpened = cv2.filter2D(img, -1, kernel)
@@ -51,7 +51,7 @@ def sharpen(img):
 
 # 拉普拉斯锐化
 def laplacian_sharpen(img, k=1.0):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     laplacian = cv2.Laplacian(img, cv2.CV_64F)
     laplacian = np.uint8(np.absolute(laplacian))
@@ -60,6 +60,8 @@ def laplacian_sharpen(img, k=1.0):
 
 # 高斯模糊
 def high_boost_sharpen(image, k=1.5):
+    if isinstance(img, str) and os.path.isfile(img):
+        img = cv2.imread(img)
     blurred = cv2.GaussianBlur(image, (0, 0), 1.0)
     mask = cv2.subtract(image, blurred)
     sharpened = cv2.addWeighted(image, 1.0, mask, k, 0)
@@ -67,7 +69,7 @@ def high_boost_sharpen(image, k=1.5):
 
 #超分辨率
 def super_resolution(img, model, max_size=1000):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     if max(img.shape) > max_size:
         return img
@@ -75,13 +77,13 @@ def super_resolution(img, model, max_size=1000):
     return img
 
 def erode(img, kernel=np.ones((3, 3), np.uint8)):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     eroded = cv2.erode(img, kernel, iterations=1)
     return eroded
 
 def dilate(img, kernel=np.ones((3, 3), np.uint8)):
-    if os.path.isfile(img):
+    if isinstance(img, str) and os.path.isfile(img):
         img = cv2.imread(img)
     dilated = cv2.dilate(img, kernel, iterations=1)
     return dilated

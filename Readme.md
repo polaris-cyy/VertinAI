@@ -112,17 +112,10 @@ python run.py --merge=true
 - 可以复制下面这个语句至cmd
 
   ```
-  python run.py -m=true
-  python run.py --fix=true
-python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thresh=0.3 --det_db_unclip_ratio=1.5 --det_db_box_thresh=0.6 --ocr_enhance_list=["grayscale","enhance","sharpen"] --crop_ratio=2.0
-  python run.py --extract_frames=true
-  python run.py --classify=true
-  python run.py -fp=true --refine_intervals=true 
-  python run.py -fp=true --get_video_segment=true
-  python run.py -fp=true --get_audio_segment=true
-  python run.py -fp=true --merge_audio_video=true
+  python run.py -m=true && python run.py --fix=true && python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thresh=0.3 --det_db_unclip_ratio=1.5 --det_db_box_thresh=0.6 --ocr_enhance_list=["grayscale","enhance","sharpen"] --crop_ratio=4.0 && python run.py --extract_frames=true && python run.py --classify=true && python run.py -fp=true --refine_intervals=true && python run.py -fp=true --get_video_segment=true && python run.py -fp=true --get_audio_segment=true && python run.py -fp=true --merge_audio_video=true
   
   ```
+```
   
   
 
@@ -157,6 +150,7 @@ python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thres
   - ocr_super_res可改为false
   - ocr参数如drop_score, det_db_thresh可更改
   - 适当减小auto_crop_ratio, 最好不小于1.5(ocr识别会出现困难)
+  - 对于活在对话里的角色, 将only_one_return设为true
   
   对于相近的角色名，如37和77
   - 在invalid_char_list中加入错误的角色名
@@ -164,7 +158,7 @@ python run.py --crop_video=true --crop_size=auto --drop_score=0.5 --det_db_thres
   
   对于有gpu的设备
   - use_tensorrf设为true
-  ```
+```
 - use_tensorrt设为true
   
   对于想保留纯音频/纯视频的

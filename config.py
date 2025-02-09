@@ -19,7 +19,7 @@ class OptionParser():
         self.parser.add_argument("--rewrite", "-re", type=bool, help="覆盖已存在的文件.")
         self.parser.add_argument("--frame_interval", type=int, help="抽帧间隔.")
 
-        self.parser.add_argument("--compress_video", type=bool, help="是否压缩视频帧率.")
+        self.parser.add_argument("--compress_video", type=bool, help="(已删除)是否压缩视频帧率.")
         self.parser.add_argument("--frame_rate", type=str, help="目标帧率.")
         self.parser.add_argument("--high_quality", type=bool, help="压缩视频质量.")
 
@@ -53,6 +53,7 @@ class OptionParser():
         self.parser.add_argument("--valid_char_list", type=list, help="合法角色名列表, 用于某些难以判别的场合")
         self.parser.add_argument("--dbscan_eps", type=float, help="DBSCAN的eps参数")
         self.parser.add_argument("--dbscan_min_samples", type=int, help="DBSCAN的min_samples参数")
+        self.parser.add_argument("--only_one_return", type=bool, help="是否只返回最接近中心点的角色名")
 
         self.parser.add_argument("--final_process", '-fp', type=bool, help="是否进行切片与合并.")
         self.parser.add_argument("--refine_intervals", type=bool, help="是否进行区间细化.")

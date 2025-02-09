@@ -35,7 +35,8 @@ class BaseOCR():
         self.always_auto_crop = opt.always_auto_crop
         self.dbscan_eps = opt.dbscan_eps
         self.dbscan_min_samples = opt.dbscan_min_samples
-
+        self.use_gpu = opt.use_tensorrt
+        self.only_one_return = opt.only_one_return
         
         self.sr_model=None
         if "super_resolution" in self.ocr_enhance_list:
@@ -117,11 +118,11 @@ class BaseOCR():
                     self.find_index_by_word(join(folder_path, entry), target_word, rewrite)
             return []
         
-        print(f"Searching for {target_word} in {folder_path}")
+        print(f"识别{target_word}, 目录为{folder_path}")
         info_path = join(join(folder_path, "params"), "index_info.txt")
         image_path = join(folder_path, "images")
         if isfile(info_path) and not rewrite:
-            print(f"Index info file already exists in {folder_path}, skipping")
+            print(f"文件已存在于{folder_path}")
             return []
         
         text_list = self.readtext_from_folder(image_path)
@@ -130,7 +131,7 @@ class BaseOCR():
         with tqdm(total=len(text_list), desc="Matching", leave=True, ncols=100) as pbar:
             for i, text in enumerate(text_list):
                 current_time = time.time()
-                if current_time - last_time > 0.1:
+                if current_time - last_time > 0.2:
                     pbar.update(i - pbar.n)
                     last_time = current_time
                 prob_list = [self.fuzzy_match(word, target_word) for word in text]
@@ -188,7 +189,7 @@ class BaseOCR():
             data_process.extract_frames(ref_video, output_path, frame_inverval)
 
         boxes, centers = [], []
-        with tqdm(total = len(os.listdir(ref_img)), desc="Calculating crop size", leave=True, ncols=100) as pbar:
+        with tqdm(total = len(os.listdir(ref_img)), desc="计算crop size", leave=True, ncols=100) as pbar:
             last_time = time.time()
             for i, image in enumerate(os.listdir(ref_img)):
                 current_time = time.time()
@@ -197,7 +198,7 @@ class BaseOCR():
                 
                 bb, texts = self.readtext(join(ref_img, image), with_bb=True, with_enhance=False)
                 for i, text in enumerate(texts):
-                    if text.startswith(target_word) or self.fuzzy_match(text, target_word):
+                    if self.fuzzy_match(text, target_word):
                         boxes.append(bb[i])
                         center = (int((bb[i][0][0] + bb[i][2][0])/2), int((bb[i][0][1] + bb[i][2][1])/2))
                         centers.append(center)
@@ -256,7 +257,7 @@ class EasyOCR(BaseOCR):
             det_db_unclip_ratio=self.det_db_unclip_ratio,
             use_multiscale_det=self.use_multiscale_det,
             det_scales=self.det_scales,
-            use_gpu=self.use_tensorrt,
+            use_gpu=self.use_gpu,
             use_tensorrt=self.use_tensorrt,
             ) 
     
@@ -270,38 +271,66 @@ class EasyOCR(BaseOCR):
                 else: 
                     image_path = eval(enhance_step)(image_path)
         text = self.reader.ocr(image_path, cls=True)
+        texts = []
+        bbs = []
+        height, width = image_path.shape[:2]
+        mid_x, mid_y = width/2, height/2
         if text[0] != None:
-            if with_bb:
-                return [text[0][i][0] for i in range(len(text[0]))], [text[0][i][1][0] for i in range(len(text[0]))]
-            return [text[0][i][1][0] for i in range(len(text[0]))]
+            for i in range(len(text[0])):
+                t = text[0][i][1][0]
+                bb = text[0][i][0]
+                texts.append(t)
+                bbs.append(bb)
+        if self.only_one_return and texts != []:
+            temp_texts, temp_bbs = [], []
+            for (t, bb) in zip(texts, bbs):
+                bb = np.array(bb)
+                min_x, min_y, max_x, max_y = np.min(bb[:, 0]), np.min(bb[:, 1]), np.max(bb[:, 0]), np.max(bb[:, 1])
+                if min_x < mid_x and max_x > mid_x and min_y < mid_y and max_y > mid_y:
+                    temp_texts.append(t)
+                    temp_bbs.append(bb)
+            if len(temp_texts) > 0:
+                texts, bbs = temp_texts, temp_bbs
+            if len(texts) != 1:
+                temp_text = texts[0]
+                temp_bb = bbs[0]
+                min_dis = float('inf')
+                for (t, bb) in zip(texts, bbs):
+                    bb = np.array(bb)
+                    min_x, min_y, max_x, max_y = np.min(bb[:, 0]), np.min(bb[:, 1]), np.max(bb[:, 0]), np.max(bb[:, 1])
+                    dis = np.linalg.norm(np.array([mid_x, mid_y]) - np.array([(min_x+max_x)/2, (min_y+max_y)/2]))
+                    if dis  < min_dis:
+                        temp_text, temp_bb, min_dis = t, bb, dis
+                texts, bbs = [temp_text], [temp_bb]
+        if with_bb:
+            return bbs, texts
         else:
-            if with_bb:
-                return [], []
-            return []
+            return texts
         
 if __name__ == "__main__":
     
     ocr = PaddleOCR(
-        lang='en',
+        lang='ch',
         use_angle_cls=True,
         show_log=False,
         rec_algorithm="SVTR_LCNet",
         rec_batch_num=10,
-        drop_score=0.2,
-        det_db_thresh=0.1,
-        det_db_box_thresh=0.15,
+        drop_score=0.5,
+        det_db_thresh=0.3,
+        det_db_box_thresh=0.5,
         det_db_unclip_ratio=2.0,
         use_multiscale_det=True,
         det_scales=[0.5, 1.0, 2.0]
+        
     ) 
-    path = r"D:\D\VertinAI\fixedM4S_cropped_frames\1551103945\images\_003833.png"
+    path = r"D:\D\VertinAI\14160.png"
     sr_model = cv2.dnn_superres.DnnSuperResImpl_create()
     sr_path = "D:\D\VertinAI\models\LapSRN_x2.pb"
     sr_model.readModel(sr_path)
     sr_model.setModel("lapsrn", 2)  
-    img = grayscale(path)
-    img = enhance(path)
-    img = sharpen(path)
+    img = cv2.imread(path)
+    img = super_resolution(img, sr_model)
+    # img = grayscale(path)
     
     # img = super_resolution(img, sr_model)
     # img = dilate(img)
@@ -310,7 +339,8 @@ if __name__ == "__main__":
     # img = grayscale(img)
     # img = sharpen(img)
 
-    text = ocr.ocr(img, cls=True)
+    text = ocr.ocr(img, cls=True)[0][0][-1][0]
+    print(EasyOCR.ch_match("37", text))
     cv2.imshow("img", img)
     cv2.waitKey(0)
     # text = ocr.ocr(img, cls=True)

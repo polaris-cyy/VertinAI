@@ -1,1 +1,1 @@
-ffmpeg -i output/output.wav output/output.mp3
+python merge.py --to_mp3

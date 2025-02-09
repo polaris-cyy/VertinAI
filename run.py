@@ -9,8 +9,6 @@ def main():
     if opt.folder_operation:
         if opt.extract_frames:
             data_process.extract_frames_from_folder(opt.input_path, opt.output_path, opt.frame_interval, opt.num_threads)
-        elif opt.compress_video:
-            data_process.video_compress_from_folder(opt.input_path, opt.output_path, opt.frame_rate,opt.rewrite, opt.high_quality, opt.num_threads)
         elif opt.fix:
             fixM4S.fixM4S_from_folder(opt.input_path, opt.output_path, opt.buf_size)
             fixM4S.modify_extension_from_folder(opt.input_path)
@@ -21,8 +19,6 @@ def main():
     else:
         if opt.extract_frames:
             data_process.extract_frames(opt.input_path, opt.output_path, opt.frame_interval, opt.num_threads)
-        elif opt.compress_video:
-            data_process.video_compress(opt.input_path, opt.output_path, opt.frame_rate, opt.rewrite, opt.high_quality, opt.num_threads)
         elif opt.fix:
             fixM4S.fixM4S(opt.input_path, opt.output_path, opt.buf_size)
             fixM4S.modify_extension(opt.input_path)

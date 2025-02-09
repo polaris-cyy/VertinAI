@@ -3,6 +3,7 @@ from glob import glob
 import subprocess
 import shutil
 from pydub import AudioSegment
+import ffmpeg
 
 def merge_wav(input_files, output_path, fade_frame=3, video_frame_rate=30):
     fade_time = 1000 * fade_frame / video_frame_rate
@@ -17,21 +18,16 @@ def merge_mp4(input_files, output_path, fade_frame=3, video_frame_rate=30):
     with open(file_list, "w") as f:
         for file in input_files:
             f.write("file '{}'\n".format(file))
-    cmd = [
-        'ffmpeg',
-        '-y',
-        '-f', 'concat',
-        '-safe', '0',
-        '-i', file_list,
-        '-loglevel', 'quiet',
-        '-c', 'copy',
-        output_path
-    ]
-    subprocess.run(cmd, check=True)
+    (
+        ffmpeg
+       .input(file_list, f='concat', safe=0)
+       .output(output_path, c='copy')
+       .run(quiet=True)
+    )
     os.remove(file_list)
 
 
-def merge(suffix='auto', fade_frame=3, video_frame_rate=30):
+def merge(suffix='auto', fade_frame=3, video_frame_rate=30, to_mp3=False):
     pwd = os.path.dirname(os.path.abspath(__file__))
     input_path = os.path.join(pwd, 'input')
     output_path = os.path.join(pwd, 'output')
@@ -55,13 +51,12 @@ def merge(suffix='auto', fade_frame=3, video_frame_rate=30):
         path = os.path.dirname(pwd)
         path = os.path.join(path, "result")
         for dir in os.listdir(path):
-            files = [file for file in os.path.join(path, dir) if file.endswith(suffix)]
+            files = [file for file in os.listdir(os.path.join(path, dir)) if file.endswith(suffix)]
             if len(files) > 1:
                 files = [file for file in files if file.endswith("final."+suffix)]
-            for file in os.listdir(os.path.join(path, dir)):
+            for file in files:
                 shutil.copy(os.path.join(path, dir, file), os.path.join(pwd, "input"))
         input_files = [os.path.join(pwd, "input", x) for x in os.listdir(os.path.join(pwd, "input")) if x.endswith(suffix)]
-
     if suffix =='wav':
         merge_wav(input_files, output_path, fade_frame, video_frame_rate)
     elif suffix =='mp4':
@@ -69,6 +64,15 @@ def merge(suffix='auto', fade_frame=3, video_frame_rate=30):
     else:
         raise NotImplementedError
 
+def to_mp3():
+    input_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", 'output.wav')
+    output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output",'output.mp3')
+    (
+        ffmpeg
+       .input(input_path)
+       .output(output_path)
+       .run(quiet=True)
+    )   
 
 if __name__ == '__main__':
     import argparse
@@ -76,4 +80,8 @@ if __name__ == '__main__':
     parser.add_argument('--suffix', type=str, default='auto', help='suffix of input files, auto for auto detect')
     parser.add_argument('--fade_frame', type=int, default=3, help='number of frames for audio fade in/out')
     parser.add_argument('--video_frame_rate', type=int, default=30, help='frame rate of video')
-    merge(**vars(parser.parse_args()))
+    parser.add_argument('--to_mp3', action='store_true', default=False, help='convert output to mp3')
+    parser = parser.parse_args()
+    merge(**vars(parser))
+    if parser.to_mp3:
+        to_mp3()
