@@ -332,9 +332,12 @@ def refine_intervals(cropped_video_path, refined_interval_path, intervals, \
                     ret, frame = cap.retrieve()
                     word = reader.readtext(frame, with_enhance=False)
                     flag = False
-                    word = reader.readtext(frame, with_enhance=True)
                     if word != []:
                         flag = any([reader.fuzzy_match(w, target_word) for w in word])
+                    if not flag:
+                        word = reader.readtext(frame, with_enhance=True)
+                        if word != []:
+                            flag = any([reader.fuzzy_match(w, target_word) for w in word])
                     if not flag:
                         continue
                     if count < start and count + expand >= start:
