@@ -25,9 +25,8 @@
     ],
     "auto_crop_interval": 20,
     "always_auto_crop": false,
-    "crop_ratio": 4.0, 
+    "crop_ratio": 2.0, 
     "ocr_enhance_list": [
-        "super_resolution"
     ],
     "rec_algorithm": "SVTR_LCNet",
     "rec_batch_num": 10,

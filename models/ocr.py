@@ -90,14 +90,14 @@ class BaseOCR():
         return True
 
     def fuzzy_match(self, word, target_word):
-        if "/" in word:
-            word = word.split("/")[0]
-            
         if word in self.invalid_char_list:
             return False
         if word == target_word or word in self.valid_char_list:
             return True
         
+        if word.startswith(target_word):
+            return True
+
         if target_word not in self.valid_char_list:
             self.valid_char_list.append(target_word)
         res = []
@@ -128,7 +128,7 @@ class BaseOCR():
         text_list = self.readtext_from_folder(image_path)
         res_list = []
         last_time = time.time()
-        with tqdm(total=len(text_list), desc="Matching", leave=True, ncols=100) as pbar:
+        with tqdm(total=len(text_list), desc="已识别", leave=True, ncols=100) as pbar:
             for i, text in enumerate(text_list):
                 current_time = time.time()
                 if current_time - last_time > 0.2:

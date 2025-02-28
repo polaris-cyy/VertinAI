@@ -14,17 +14,18 @@ def merge_wav(input_files, output_path, fade_frame=3, video_frame_rate=30):
     audio.export(output_path, format="wav")
 
 def merge_mp4(input_files, output_path, fade_frame=3, video_frame_rate=30):
-    file_list = "temp_file_list.txt"
-    with open(file_list, "w") as f:
-        for file in input_files:
-            f.write("file '{}'\n".format(file))
+    inputs = [ffmpeg.input(file) for file in input_files]
+    
+    # 使用 concat 滤镜并重置时间戳
+    video = ffmpeg.concat(*[i.video for i in inputs], v=1, a=0)
+    audio = ffmpeg.concat(*[i.audio for i in inputs], v=0, a=1)
+
     (
         ffmpeg
-       .input(file_list, f='concat', safe=0)
-       .output(output_path, c='copy')
-       .run(quiet=True)
+        .output(video, audio, output_path)
+        .run(overwrite_output=True)
     )
-    os.remove(file_list)
+
 
 
 def merge(suffix='auto', fade_frame=3, video_frame_rate=30, to_mp3=False):
@@ -71,7 +72,7 @@ def to_mp3():
         ffmpeg
        .input(input_path)
        .output(output_path)
-       .run(quiet=True)
+       .run(quiet=False)
     )   
 
 if __name__ == '__main__':

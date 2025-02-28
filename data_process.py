@@ -13,7 +13,7 @@ import ffmpeg
 audio_suffix = "30280"
 split_str = "-"
 fade_frame = 3 # acrossfade融合的帧数
-max_gap = 3 # 防止恰好有一两帧名字没识别上
+max_gap = 2 # 防止恰好有一两帧名字没识别上
 
 def move_data(cache_path, output_path=None):
     if not os.path.isdir(cache_path):
@@ -393,10 +393,8 @@ def get_video_segment(video_path, new_video_path, intervals):
                     last_update_time = current_time
                     pbar.update(count - pbar.n)
                 start, end = intervals[i_count]
-                if i_count != 0:
-                    start += (fade_frame+1) // 2
                 if i_count != len(intervals)-1:
-                    end -= fade_frame // 2
+                    end -= fade_frame
 
                 if count >= start and count <= end:
                     ret, frame = cap.retrieve()
